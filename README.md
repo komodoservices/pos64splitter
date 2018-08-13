@@ -16,9 +16,13 @@ Coins imported into your wallet.
 
 
 ## How to Use
-Modify the `config.py` file to make the RPC settings for your assetchain. $home/<usr>/.komodo/ASSETCHAIN
+Modify the `config.py` file to match the RPC settings in your assetchain .conf file. 
 
-Run the `.split` command
+Conf files are located at: $home/user/.komodo/ASSETCHAIN.
+
+Run the `./split` command.
+
+That will generate 64 addresses, then send your coins proportionately to each address.
 
 
 
