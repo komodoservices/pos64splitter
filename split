@@ -1,0 +1,17 @@
+#!/bin/bash
+
+number=0
+
+echo -n "How many coins do you want to split?"
+read number
+
+amount=$((number/64))
+
+echo "Sending $amount to all 64 addresses!"
+
+./genaddresses.py > list.py
+
+./sendmany64.py $amount
+
+echo "Done!"
+
