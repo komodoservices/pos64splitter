@@ -2,7 +2,7 @@
 
 number=0
 
-echo -n "How many coins do you want to split?"
+echo -n "How many coins do you want to split? "
 read number
 
 amount=$((number/64))
