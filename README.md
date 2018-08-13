@@ -16,9 +16,21 @@ Coins imported into your wallet.
 
 
 ## How to Use
+
+Clone the repo:
+
+`git clone https://github.com/komodoservices/pos64splitter`
+
+Enter the repo:
+
+`cd pos64splitter`
+
 Modify the `config.py` file to match the RPC settings in your assetchain .conf file. 
 
+`nano config.py`
+
 Conf files are located at: $home/user/.komodo/ASSETCHAIN.
+
 
 Run the `./split` command.
 
