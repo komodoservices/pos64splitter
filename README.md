@@ -2,7 +2,7 @@
 A coin splitter for PoS assetchains.
 
 
-##Dependencies
+## Dependencies
 python3 and requests installed 
 ```shell 
 sudo apt-get install python3
@@ -15,11 +15,11 @@ pip3 install requests
 Coins imported into your wallet.
 
 
-##How to Use
+## How to Use
 Modify the `config.py` file to make the RPC settings for your assetchain. $home/<usr>/.komodo/ASSETCHAIN
 
 Run the `.split` command
 
 
 
-This tool uses work from [alrighttt/dockersegid](https://github.com/alrighttt/dockersegid) and we thank Alright very much.
+## This tool uses work from [alrighttt/dockersegid](https://github.com/alrighttt/dockersegid) and we thank Alright very much.
