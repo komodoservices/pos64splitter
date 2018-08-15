@@ -1,5 +1,12 @@
 # pos64splitter
+
 A coin splitter for PoS assetchains.
+
+PoS or PoW/PoS assetchains require coins to be staked across 64 segids.
+
+If there is not at least 1 UTXO in each segid, the chain is more viable to a 51% attack.
+
+Simply run `./split`, choose your balance, and this will split your coins for you!
 
 
 ## Dependencies
@@ -31,10 +38,11 @@ Modify the `config.py` file to match the RPC settings in your assetchain .conf f
 
 Conf files are located at: $home/user/.komodo/ASSETCHAIN.
 
-
 Run the `./split` command.
 
-That will generate 64 addresses, then send your coins proportionately to each address.
+That will generate 64 addresses, and then ask how many coins you'd like to split.
+
+Enter your balance or # you want split.  And then your coins will be sent proportionately to each address.
 
 
 
