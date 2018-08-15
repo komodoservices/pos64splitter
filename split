@@ -9,7 +9,12 @@ amount=$((number/64))
 
 echo "Sending $amount to all 64 addresses!"
 
-./genaddresses.py > list.py
+if [ -e list.py ]
+then
+    echo "Already have 64 addresses."
+else
+    ./genaddresses.py > list.py
+fi
 
 ./sendmany64.py $amount
 
