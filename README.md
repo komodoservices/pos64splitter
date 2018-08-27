@@ -8,6 +8,8 @@ If there is not at least 1 UTXO in each segid, the chain is more viable to a 51%
 
 Simply run `./split`, choose your balance, and this will split your coins for you!
 
+Warning: The `./split` script automatically generates a `list.py` file that contains the 64 addresses private keys. Keep that safe after using.
+
 
 ## Dependencies
 python3 and requests installed 
