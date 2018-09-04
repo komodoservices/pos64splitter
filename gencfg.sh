@@ -2,7 +2,7 @@
 if [ -z $1 ]; then
   echo ""
   echo "Please set the name of the chain."
-  echo "eg. ./gencfg STAKED4"
+  echo "eg. ./gencfg.sh STAKED4"
   echo ""
   exit
 fi
