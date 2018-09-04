@@ -8,7 +8,8 @@ if [ -z $1 ]; then
 fi
 
 ac=$1
-conf="~/.komodo/$ac/$ac.conf"
+conf="/home/$USER/.komodo/$ac/$ac.conf"
+echo $conf
 if [ ! -f "$conf" ]; then
   echo ""
   echo "Please sync the chain first before running this script!"
