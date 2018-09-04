@@ -12,14 +12,14 @@ Warning: The `./split` script automatically generates a `list.py` file that cont
 
 
 ## Dependencies
-python3 and requests installed 
-```shell 
+python3 and requests installed
+```shell
 sudo apt-get install python3
 sudo apt-get install python3-pip
 pip3 install requests
 ```
 
-[komodod](https://github.com/jl777/komodo) installed with your assetchain running.
+[komodod](https://github.com/StakedChain/komodo) installed with your assetchain running.
 
 Coins imported into your wallet.
 
@@ -28,24 +28,20 @@ Coins imported into your wallet.
 
 Clone the repo:
 
-`git clone https://github.com/komodoservices/pos64splitter`
+`git clone https://github.com/StakedChain/pos64splitter.git`
 
 Enter the repo:
 
 `cd pos64splitter`
 
-Modify the `config.py` file to match the RPC settings in your assetchain .conf file. 
+Export the chain settings  to  `config.py` where `x` is the STAKED chain number.
 
-`nano config.py`
-
-Conf files are located at: $home/user/.komodo/ASSETCHAIN.
+`./gencfg.sh STAKEDx`
 
 Run the `./split` command.
 
 That will generate 64 addresses, and then ask how many coins you'd like to split.
 
 Enter your balance or # you want split.  And then your coins will be sent proportionately to each address.
-
-
 
 ## This tool uses work from [alrighttt/dockersegid](https://github.com/alrighttt/dockersegid) and we thank Alright very much.
