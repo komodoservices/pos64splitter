@@ -27,3 +27,6 @@ echo "rpcpassword = '"$pass"'" >> $cfgfile
 echo "rpcport = '"$port"'" >> $cfgfile
 echo "rpcip = '127.0.0.1'" >> $cfgfile
 
+echo ""
+echo "config.py sucessfully generated:"
+cat $cfgfile
