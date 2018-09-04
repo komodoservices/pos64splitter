@@ -9,7 +9,6 @@ fi
 
 ac=$1
 conf="/home/$USER/.komodo/$ac/$ac.conf"
-echo $conf
 if [ ! -f "$conf" ]; then
   echo ""
   echo "Please sync the chain first before running this script!"
@@ -23,8 +22,8 @@ pass=$(echo $thisconf | grep -Po "rpcpassword=(\S*)" | sed 's/rpcpassword=//')
 port=$(echo $thisconf | grep -Po "rpcport=(\S*)" | sed 's/rpcport=//')
 
 cfgfile="config.py"
-echo "rpcuser = '"$user"'"
-echo "rpcpassword = '"$pass"'"
-echo "rpcport = '"$port"'"
-echo "rpcip = '127.0.0.1'"
+echo "rpcuser = '"$user"'" > $cfgfile
+echo "rpcpassword = '"$pass"'" >> $cfgfile
+echo "rpcport = '"$port"'" >> $cfgfile
+echo "rpcip = '127.0.0.1'" >> $cfgfile
 
