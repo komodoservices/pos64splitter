@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from list import segids
 import json
 import kmdrpc
 
@@ -9,9 +8,12 @@ AMOUNT = input("Please specify the amount to send to each address:")
 # iterate addresses list, construct dictionary,
 # with amount as value for each address
 addresses_dict = {}
-for e in segids:
-    address = e[-1]
-    addresses_dict[address] = AMOUNT
+with open('list.json') as key_list:
+    json_data = json.load(key_list)
+    for i in json_data:
+        print(i)
+        address = i[3]
+        addresses_dict[address] = AMOUNT
 
 # make rpc call, issue transaction
 sendmany_result = kmdrpc.sendmany_rpc(CHAIN, addresses_dict)

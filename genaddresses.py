@@ -5,8 +5,8 @@ import sys
 import kmdrpc
 import os.path
 
-if os.path.isfile("list.py"):
-    sys.exit('Already have list.py, move it if you would like to generate another set. You can use importlist.py script to import the already existing list.py to a given chain.')
+if os.path.isfile("list.json"):
+    sys.exit('Already have list.json, move it if you would like to generate another set. You can use importlist.py script to import the already existing list.py to a given chain.')
 
 CHAIN = input('Please specify chain:')
 
@@ -44,6 +44,6 @@ for position in range(64):
     segids_array.append(segids[position])
 
 # save output to list.py
-print('Success! list.py created. THIS FILE CONTAINS PRIVATE KEYS. KEEP IT SAFE.')
-f = open("list.py","w+")
-f.write("segids = " + str(json.dumps(segids_array)))
+print('Success! list.json created. THIS FILE CONTAINS PRIVATE KEYS. KEEP IT SAFE.')
+f = open("list.json","w+")
+f.write(json.dumps(segids_array))
