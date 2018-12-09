@@ -66,6 +66,14 @@ def dumpprivkey_rpc(chain, address):
         "params": [address]}
     return(post_rpc(def_credentials(chain), dumpprivkey_payload))
 
+def importprivkey_rpc(chain, privkey):
+    importprivkey_payload = {
+        "jsonrpc": "1.0",
+        "id": "python",
+        "method": "importprivkey",
+        "params": [privkey]}
+    return(post_rpc(def_credentials(chain), importprivkey_payload))
+
 def getnewaddress_rpc(chain):
     getnewaddress_payload = {
         "jsonrpc": "1.0",

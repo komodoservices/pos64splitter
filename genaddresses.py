@@ -3,8 +3,12 @@ import json
 import requests
 import sys
 import kmdrpc
+import os.path
 
-CHAIN = sys.argv[1]
+if os.path.isfile("list.py"):
+    sys.exit('Already have list.py, move it if you would like to generate another set. You can use importlist.py script to import the already existing list.py to a given chain.')
+
+CHAIN = input('Please specify chain:')
 
 # generate address, validate address, dump private key
 def genvaldump():
@@ -28,7 +32,6 @@ def genvaldump():
 segids = {}
 while len(segids.keys()) < 64:
     genvaldump_result = genvaldump()
-    print(genvaldump_result)
     segid = genvaldump_result[0]
     if segid in segids:
         pass
@@ -41,5 +44,6 @@ for position in range(64):
     segids_array.append(segids[position])
 
 # save output to list.py
+print('Success! list.py created. THIS FILE CONTAINS PRIVATE KEYS. KEEP IT SAFE.')
 f = open("list.py","w+")
 f.write("segids = " + str(json.dumps(segids_array)))
