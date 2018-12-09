@@ -73,3 +73,11 @@ def getnewaddress_rpc(chain):
         "method": "getnewaddress",
         "params": []}
     return(post_rpc(def_credentials(chain), getnewaddress_payload))
+
+def sendmany_rpc(chain, addresses_dict):
+    sendmany_payload = {
+        "jsonrpc": "1.0",
+        "id": "python",
+        "method": "sendmany",
+        "params": ["", addresses_dict]}
+    return(post_rpc(def_credentials(chain), sendmany_payload))
