@@ -46,9 +46,9 @@ def sendmanyloop(chain, amount, utxos):
     lockunspent_result = kmdrpc.lockunspent_rpc(CHAIN, False, lockunspent_list)
     return(txid_list)
 
+sendmanyloop_result = sendmanyloop(CHAIN, AMOUNT, UTXOS)
 #unlock all locked utxos
 kmdrpc.unlockunspent(CHAIN)
-sendmanyloop_result = sendmanyloop(CHAIN, AMOUNT, UTXOS)
 for i in sendmanyloop_result:
    print(i)
 print('Success!')
