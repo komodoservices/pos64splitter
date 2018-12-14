@@ -42,8 +42,8 @@ def sendmanyloop(chain, amount, utxos):
                     "vout": vout['n']
                     }
                 lockunspent_list.append(output_dict)
-
-    lockunspent_result = kmdrpc.lockunspent_rpc(CHAIN, False, lockunspent_list)
+        lockunspent_result = kmdrpc.lockunspent_rpc(CHAIN, False, lockunspent_list)
+    
     return(txid_list)
 
 sendmanyloop_result = sendmanyloop(CHAIN, AMOUNT, UTXOS)
