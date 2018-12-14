@@ -10,7 +10,7 @@ Currently, this will maintain a static number of UTXOs. This is important becaus
 ```shell
 sudo apt-get install python3
 sudo apt-get install python3-pip
-pip3 install requests python-bitcoinlib hashlib base58
+pip3 install requests python-bitcoinlib base58
 ```
 
 [komodod](https://github.com/StakedChain/komodo) installed with your assetchain running.
