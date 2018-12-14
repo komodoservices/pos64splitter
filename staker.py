@@ -7,14 +7,11 @@ import bitcoin
 from bitcoin.wallet import P2PKHBitcoinAddress
 from bitcoin.core import x
 
-if not os.path.isfile("list.json"):
-    sys.exit('No list.json file present. Use genaddresses.py script to generate one.')
-
 CHAIN = 'STK'
-BESTBLOCKHASH =  sys.argv[1]
+#BESTBLOCKHASH =  sys.argv[1]
 bitcoin.params = CoinParams
-#getbestblockhash_result = kmdrpc.getbestblockhash_rpc(CHAIN)
-#BESTBLOCKHASH =  getbestblockhash_result['result']
+getbestblockhash_result = kmdrpc.getbestblockhash_rpc(CHAIN)
+BESTBLOCKHASH =  getbestblockhash_result['result']
 
 # function to get addresses:txs for outputs from latest block
 def latest_block_txs(chain, blockhash):
