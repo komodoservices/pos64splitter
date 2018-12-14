@@ -11,10 +11,10 @@ if not os.path.isfile("list.json"):
     sys.exit('No list.json file present. Use genaddresses.py script to generate one.')
 
 CHAIN = 'STK'
-#BESTBLOCKHASH =  sys.argv[1]
+BESTBLOCKHASH =  sys.argv[1]
 bitcoin.params = CoinParams
-getbestblockhash_result = kmdrpc.getbestblockhash_rpc(CHAIN)
-BESTBLOCKHASH =  getbestblockhash_result['result']
+#getbestblockhash_result = kmdrpc.getbestblockhash_rpc(CHAIN)
+#BESTBLOCKHASH =  getbestblockhash_result['result']
 
 # function to get addresses:txs for outputs from latest block
 def latest_block_txs(chain, blockhash):
@@ -70,6 +70,8 @@ else:
 # take list of txids and format them for createrawtransaction
 createraw_list = []
 
+staked_from = staked_from_address(CHAIN, BESTBLOCKHASH)
+
 for txid in txid_list:
     input_dict =	{
         "txid": txid,
@@ -78,7 +80,7 @@ for txid in txid_list:
     createraw_list.append(input_dict)
 
 output_dict = {
-        staked_from_address(CHAIN, BESTBLOCKHASH): tx_value
+        staked_from: tx_value
     }
 
 createrawtx_result = kmdrpc.createrawtransaction_rpc(CHAIN, createraw_list, output_dict)
@@ -86,6 +88,7 @@ unsigned_hex = createrawtx_result['result']
 signrawtx_result = kmdrpc.signrawtransaction_rpc(CHAIN, unsigned_hex)
 signed_hex = signrawtx_result['result']['hex']
 sendrawtx_result = kmdrpc.sendrawtx_rpc(CHAIN, signed_hex)
-print(sendrawtx_result)
+validateaddress_result = kmdrpc.validateaddress_rpc(CHAIN, staked_from)
+print('Staked from segid' + str(validateaddress_result['result']['segid']) + ' ' + sendrawtx_result['result'])
 
 
