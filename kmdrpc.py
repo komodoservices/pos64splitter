@@ -4,6 +4,7 @@ import os
 import requests
 import json
 import platform
+import sys
 from conf import CoinParams
 import bitcoin
 from bitcoin.wallet import P2PKHBitcoinAddress
@@ -42,7 +43,12 @@ def def_credentials(chain):
 def post_rpc(url, payload, auth=None):
     try:
         r = requests.post(url, data=json.dumps(payload), auth=auth)
-        return(json.loads(r.text))
+        rpc_result = json.loads(r.text)
+        if rpc_result['result'] == None:
+            print(str(payload['method']) + ' rpc call failed with ' + str(rpc_result['error']))
+            sys.exit(0)
+        else:
+            return(rpc_result['result'])
     except Exception as e:
         raise Exception("Couldn't connect to " + url + ": ", e)
 
@@ -55,7 +61,7 @@ def getpubkey_rpc(chain):
         "params": []}
     getinfo_result = post_rpc(def_credentials(chain), getinfo_payload)
 
-    return(getinfo_result['result']['pubkey'])
+    return(getinfo_result['pubkey'])
 
 # function to unlock ALL lockunspent UTXOs
 def unlockunspent(CHAIN):
