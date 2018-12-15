@@ -9,21 +9,21 @@ from bitcoin.core import x
 
 
 CHAIN = 'MGNX'
-#BESTBLOCKHASH =  sys.argv[1]
-TXFEE = 0.00005
+BESTBLOCKHASH =  sys.argv[1]
+TXFEE = 5000
 bitcoin.params = CoinParams
-BESTBLOCKHASH =  kmdrpc.getbestblockhash_rpc(CHAIN)
+#BESTBLOCKHASH =  kmdrpc.getbestblockhash_rpc(CHAIN)
 
-# function to get addresses:txs for outputs from latest block
+# function to get first and last outputs from latest block
 def latest_block_txs(chain, blockhash):
     # get txs in latest block
     getblock_result = kmdrpc.getblock_rpc(chain, blockhash, 2)
     getblock_txs = getblock_result['tx']
+    #print('getblock_txs0', getblock_txs[0]['txid'])
+    #print('getblock_txs-1', getblock_txs[-1]['txid'])
     output_addresses = {}
-
-    # get outputs of latest block
-    for tx in getblock_txs:
-        output_addresses[tx['vout'][0]['scriptPubKey']['addresses'][0]] = tx['txid']
+    output_addresses[getblock_txs[0]['vout'][0]['scriptPubKey']['addresses'][0]] = getblock_txs[0]['txid']
+    output_addresses[getblock_txs[-1]['vout'][0]['scriptPubKey']['addresses'][0]] = getblock_txs[-1]['txid']
     return(output_addresses)
 
 # function to find address that staked
@@ -43,25 +43,20 @@ def didwemine(chain, blockhash):
 
 txid_list = []
 
-# function to combine coinbase and UTXO used to stake it
+# combine coinbase and UTXO used to stake it
 if didwemine(CHAIN, BESTBLOCKHASH):
     tx_value = 0
     block_txs = latest_block_txs(CHAIN, BESTBLOCKHASH)
+    print(block_txs)
     for address in block_txs:
         validateaddress_result = kmdrpc.validateaddress_rpc(CHAIN, address)
         if validateaddress_result['ismine']:
              getrawtx_result = kmdrpc.getrawtransaction_rpc(CHAIN, block_txs[address])
              txid_list.append(block_txs[address])
-             tx_value += getrawtx_result['vout'][0]['value']
-    #print(block_txs)
+             tx_value += getrawtx_result['vout'][0]['valueSat']
 else:
-    #logger.info('did not mine latest block, exiting')
-    #logging.info('did not mine latest block, exiting')
     print('did not mine latest block, exiting')
     sys.exit(0)
-
-#print(tx_value)
-#print(txid_list)
 
 # take list of txids and format them for createrawtransaction
 createraw_list = []
@@ -76,7 +71,7 @@ for txid in txid_list:
     createraw_list.append(input_dict)
 
 output_dict = {
-        staked_from: (tx_value - TXFEE)
+        staked_from: ((tx_value - TXFEE) / 100000000)
     }
 
 unsigned_hex = kmdrpc.createrawtransaction_rpc(CHAIN, createraw_list, output_dict)
