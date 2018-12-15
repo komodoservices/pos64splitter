@@ -19,10 +19,7 @@ def sendmany64(chain, amount):
 
     # make rpc call, issue transaction
     sendmany_result = kmdrpc.sendmany_rpc(chain, addresses_dict)
-    if sendmany_result['result'] == None:
-        sys.exit('ERROR: ' + str(sendmany_result['error']))
-    else:
-        return(sendmany_result['result'])
+    return(sendmany_result)
 
 # function to do sendmany64 UTXOS times, locking all UTXOs except change
 def sendmanyloop(chain, amount, utxos):
@@ -33,7 +30,7 @@ def sendmanyloop(chain, amount, utxos):
         getrawtx_result = kmdrpc.getrawtransaction_rpc(CHAIN, sendmany64_txid)
         lockunspent_list = []
         # find change output, lock all other outputs
-        for vout in getrawtx_result['result']['vout']:
+        for vout in getrawtx_result['vout']:
             if vout['value'] != float(AMOUNT):
                 change_output = vout['n']
             else:

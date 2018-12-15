@@ -13,16 +13,14 @@ CHAIN = input('Please specify chain:')
 # generate address, validate address, dump private key
 def genvaldump():
     # get new address
-    getnewaddress_result = kmdrpc.getnewaddress_rpc(CHAIN)
-    address = getnewaddress_result['result']
+    address = kmdrpc.getnewaddress_rpc(CHAIN)
     # validate address
     validateaddress_result = kmdrpc.validateaddress_rpc(CHAIN, address)
-    segid = validateaddress_result['result']['segid']
-    pubkey = validateaddress_result['result']['pubkey']
-    address = validateaddress_result['result']['address']
+    segid = validateaddress_result['segid']
+    pubkey = validateaddress_result['pubkey']
+    address = validateaddress_result['address']
     # dump private key for the address
-    dumpprivkey_result = kmdrpc.dumpprivkey_rpc(CHAIN, address)
-    privkey = dumpprivkey_result['result']
+    privkey = kmdrpc.dumpprivkey_rpc(CHAIN, address)
     # function output
     output = [segid, pubkey, privkey, address]
     return(output)
