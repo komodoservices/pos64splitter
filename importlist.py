@@ -14,3 +14,4 @@ with open('list.json') as key_list:
     for i in json_data:
         print(i[3])
         kmdrpc.importprivkey_rpc(CHAIN, i[2])
+

@@ -12,6 +12,7 @@ from bitcoin.core import x
 
 bitcoin.params = CoinParams
 
+
 # define function that fetchs rpc creds from .conf
 def def_credentials(chain):
     operating_system = platform.system()
@@ -26,9 +27,8 @@ def def_credentials(chain):
         coin_config_file = str(ac_dir + '/komodo.conf')
     else:
         coin_config_file = str(ac_dir + '/' + chain + '/' + chain + '.conf')
-    #define rpc creds
+    # define rpc creds
     with open(coin_config_file, 'r') as f:
-        #print("Reading config file for credentials:", coin_config_file)
         for line in f:
             l = line.rstrip()
             if re.search('rpcuser', l):
@@ -39,18 +39,20 @@ def def_credentials(chain):
                 rpcport = l.replace('rpcport=', '')
     return('http://' + rpcuser + ':' + rpcpassword + '@127.0.0.1:' + rpcport)
 
+
 # define function that posts json data
 def post_rpc(url, payload, auth=None):
     try:
         r = requests.post(url, data=json.dumps(payload), auth=auth)
         rpc_result = json.loads(r.text)
-        if rpc_result['result'] == None:
+        if rpc_result['result'] is None:
             print(str(payload['method']) + ' rpc call failed with ' + str(rpc_result['error']))
             sys.exit(0)
         else:
             return(rpc_result['result'])
     except Exception as e:
         raise Exception("Couldn't connect to " + url + ": ", e)
+
 
 # Return current -pubkey=
 def getpubkey_rpc(chain):
@@ -62,6 +64,7 @@ def getpubkey_rpc(chain):
     getinfo_result = post_rpc(def_credentials(chain), getinfo_payload)
 
     return(getinfo_result['pubkey'])
+
 
 # function to unlock ALL lockunspent UTXOs
 def unlockunspent(CHAIN):
@@ -75,6 +78,7 @@ def unlockunspent(CHAIN):
 
 # VANILLA RPC
 
+
 def sendrawtx_rpc(chain, rawtx):
     sendrawtx_payload = {
         "jsonrpc": "1.0",
@@ -82,6 +86,7 @@ def sendrawtx_rpc(chain, rawtx):
         "method": "sendrawtransaction",
         "params": [rawtx]}
     return(post_rpc(def_credentials(chain), sendrawtx_payload))
+
 
 def sendmany_rpc(chain, addresses_dict):
     sendmany_payload = {
@@ -91,6 +96,7 @@ def sendmany_rpc(chain, addresses_dict):
         "params": ["", addresses_dict]}
     return(post_rpc(def_credentials(chain), sendmany_payload))
 
+
 def getrawtransaction_rpc(chain, rawtx):
     getrawtransaction_payload = {
         "jsonrpc": "1.0",
@@ -98,6 +104,7 @@ def getrawtransaction_rpc(chain, rawtx):
         "method": "getrawtransaction",
         "params": [rawtx, 1]}
     return(post_rpc(def_credentials(chain), getrawtransaction_payload))
+
 
 def createrawtransaction_rpc(chain, input_dict, output_dict):
     createrawtransaction_payload = {
@@ -107,6 +114,7 @@ def createrawtransaction_rpc(chain, input_dict, output_dict):
         "params": [input_dict, output_dict]}
     return(post_rpc(def_credentials(chain), createrawtransaction_payload))
 
+
 def signrawtransaction_rpc(chain, rawtx):
     signrawtransaction_payload = {
         "jsonrpc": "1.0",
@@ -115,6 +123,7 @@ def signrawtransaction_rpc(chain, rawtx):
         "params": [rawtx]}
     return(post_rpc(def_credentials(chain), signrawtransaction_payload))
 
+
 def validateaddress_rpc(chain, address):
     validateaddress_payload = {
         "jsonrpc": "1.0",
@@ -122,6 +131,7 @@ def validateaddress_rpc(chain, address):
         "method": "validateaddress",
         "params": [address]}
     return(post_rpc(def_credentials(chain), validateaddress_payload))
+
 
 def dumpprivkey_rpc(chain, address):
     dumpprivkey_payload = {
@@ -131,6 +141,7 @@ def dumpprivkey_rpc(chain, address):
         "params": [address]}
     return(post_rpc(def_credentials(chain), dumpprivkey_payload))
 
+
 def importprivkey_rpc(chain, privkey):
     importprivkey_payload = {
         "jsonrpc": "1.0",
@@ -138,6 +149,7 @@ def importprivkey_rpc(chain, privkey):
         "method": "importprivkey",
         "params": [privkey]}
     return(post_rpc(def_credentials(chain), importprivkey_payload))
+
 
 def getnewaddress_rpc(chain):
     getnewaddress_payload = {
@@ -147,6 +159,7 @@ def getnewaddress_rpc(chain):
         "params": []}
     return(post_rpc(def_credentials(chain), getnewaddress_payload))
 
+
 def validateaddress_rpc(chain, address):
     validateaddress_payload = {
         "jsonrpc": "1.0",
@@ -154,6 +167,7 @@ def validateaddress_rpc(chain, address):
         "method": "validateaddress",
         "params": [address]}
     return(post_rpc(def_credentials(chain), validateaddress_payload))
+
 
 def getbestblockhash_rpc(chain):
     getbestblockhash_payload = {
@@ -163,6 +177,7 @@ def getbestblockhash_rpc(chain):
         "params": []}
     return(post_rpc(def_credentials(chain), getbestblockhash_payload))
 
+
 def getblock_rpc(chain, block, verbosity):
     getblock_payload = {
         "jsonrpc": "1.0",
@@ -170,6 +185,7 @@ def getblock_rpc(chain, block, verbosity):
         "method": "getblock",
         "params": [block, verbosity]}
     return(post_rpc(def_credentials(chain), getblock_payload))
+
 
 def lockunspent_rpc(chain, lock_bool, txid_list):
     lockunspent_payload = {
@@ -179,6 +195,7 @@ def lockunspent_rpc(chain, lock_bool, txid_list):
         "params": [lock_bool, txid_list]}
     return(post_rpc(def_credentials(chain), lockunspent_payload))
 
+
 def listlockunspent_rpc(chain):
     listlockunspent_payload = {
         "jsonrpc": "1.0",
@@ -186,3 +203,4 @@ def listlockunspent_rpc(chain):
         "method": "listlockunspent",
         "params": []}
     return(post_rpc(def_credentials(chain), listlockunspent_payload))
+
