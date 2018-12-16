@@ -51,7 +51,6 @@ txid_list = []
 if didwemine(CHAIN, BESTBLOCKHASH):
     tx_value = 0
     block_txs = latest_block_txs(CHAIN, BESTBLOCKHASH)
-    print(block_txs)
     for address in block_txs:
         validateaddress_result = kmdrpc.validateaddress_rpc(CHAIN, address)
         if validateaddress_result['ismine']:
