@@ -70,7 +70,7 @@ def getpubkey_rpc(chain):
 def unlockunspent(CHAIN):
     listlockunspent_result = listlockunspent_rpc(CHAIN)
     unlock_list = []
-    for i in listlockunspent_result['result']:
+    for i in listlockunspent_result:
         unlock_list.append(i)
 
     lockunspent_result = lockunspent_rpc(CHAIN, True, unlock_list)
