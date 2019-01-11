@@ -87,14 +87,20 @@ if segid == -1:
     }
     createraw_list.append(input_dict)
     listunspent_result = kmdrpc.listunspent_rpc(CHAIN)
-    listunspent_result = sorted(listunspent_result,key=lambda x : x['amount'])
-    input_dict = {
-        "txid": listunspent_result[0]['txid'],
-        "vout": listunspent_result[0]['vout']
-    }
-    tx_value += listunspent_result[0]['amount'] * 100000000
+    listunspent_result = sorted(listunspent_result,key=lambda x : (['amount'], x['confirmations']))
+    for unspent in listunspent_result:
+        # Check the utxo is spendable and has been notarised at least once, to prevent problems with reorgs.
+        if unspent['spendable'] and unspent['confirmations'] > 2:
+            input_dict = {
+                "txid": unspent['txid'],
+                "vout": unspent['vout']
+            }
+            tx_value += unspent['amount'] * 100000000
+            break
     createraw_list.append(input_dict)
+    # check height so we dont count early chain or throw an error.
     if getblock_result['height'] > 1800:
+        # find out what segids have staked the least in the last day and randomly choose one to send our funds too.
         getlastsegidstakes_result = kmdrpc.getlastsegidstakes_rpc(CHAIN,1440)['SegIds']
         usable_segids = []
         for segid, stakes in getlastsegidstakes_result.items():

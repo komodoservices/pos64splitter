@@ -63,31 +63,29 @@ setpubkey for R address
 
 check coinbase -> R address 
 
-if yes check segid of block != -1 
+if yes check segid of block.
 
-if -1 send PoW mined coinbase to either:
+if -1 send PoW mined coinbase to :
 
-    1.  listunspent call ... 
+        listunspent call ... 
 
-        sort by amount -> smallest at top
+        sort by amount -> smallest at top and then by confirms -> lowest to top. (we want large and old utxos to maximise staking rewards.)
 
         select the top txid/vout
 
         add this txid to txid_list
 
-    2.  get last segid stakes 1440 blocks (last24H)
+        get last segid stakes 1440 blocks (last24H)
 
-        select all segids under 22 stakes
+        select all segids under 22 stakes (average stakes per segid in 24H)
 
         randomly choose one to get segid we will send to.        
 
-if segid >= 0 
+if segid >= 0 :
 
     fetch last transaction in block
 
     check if this tx belongs to the node
 
-    if yes, use alrights code to combine this coinbase utxo with the 
-    
-    utxo that staked it.
+    if yes, use alrights code to combine this coinbase utxo with the utxo that staked it.
     
