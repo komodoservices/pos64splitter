@@ -36,15 +36,58 @@ Copy this file to the directory `komodod` is located.
 `./sendmany64.py`
 ```shell
 Please specify chain:CFEK
+Balance: 1000000.77
 Please specify the size of UTXOs:10
 Please specify the amount of UTXOs to send to each segid:10
 ```
-Please take note of what this is actually asking for. The above example will send 6400 coins total. It will send 100 coins in 10 UTXOs to each of the 64 segids.
+Please take note of what this is actually asking for. The above example will send 6400 coins total. It will send 100 coins in 10 UTXOs to each of the 64 segids. Will throw error if your entered amounts are more than your balance. Will tell you how much avalible you have for each segid.
 
-You now need to start the daemon with -blocknotify and -pubkey set. For example:
+You now need to start the daemon with -blocknotify and -pubkey set.
 
-`./komodod -ac_name=CFEK -ac_supply=1000000 -ac_reward=10000000000 -ac_cc=2 -ac_staked=50 -addnode=195.201.20.230 -addnode=195.201.137.5 -blocknotify=/home/<USER>/pos64staker/staker.py -pubkey=0367e6b61a60f9fe6748c27f40d0afe1681ec2cc125be51d47dad35955fab3ba3b`
+Fetch a pubkey from your `list.json` and place it in your start command. For example:
 
-You can use the `validateaddress` command in komodo-cli to get the pubkey of an address you own. Be sure that this address is imported to the daemon before you begin using the staker. 
+`./komodod -ac_name=CFEK -ac_supply=1000000 -ac_reward=10000000000 -ac_cc=2 -ac_staked=50 -addnode=195.201.20.230 -addnode=195.201.137.5  -pubkey=0367e6b61a60f9fe6748c27f40d0afe1681ec2cc125be51d47dad35955fab3ba3b '-blocknotify=/home/<USER>/pos64staker/staker.py %s CFEK'`
+
+NOTE the CFEK in -blocknotify make sure you change this to the correct chain name you are using also note the single quotes.
 
 After the daemon has started and is synced simply do `komodo-cli -ac_name=CFEK setgenerate true 0` to begin staking. 
+
+
+### How the staker.py works
+
+on block arrival:
+
+getinfo for -pubkey 
+
+setpubkey for R address 
+
+check coinbase -> R address 
+
+if yes check segid of block != -1 
+
+if -1 send PoW mined coinbase to either:
+
+    1.  listunspent call ... 
+
+        sort by amount -> smallest at top
+
+        select the top txid/vout
+
+        add this txid to txid_list
+
+    2.  get last segid stakes 1440 blocks (last24H)
+
+        select all segids under 22 stakes
+
+        randomly choose one to get segid we will send to.        
+
+if segid >= 0 
+
+    fetch last transaction in block
+
+    check if this tx belongs to the node
+
+    if yes, use alrights code to combine this coinbase utxo with the 
+    
+    utxo that staked it.
+    

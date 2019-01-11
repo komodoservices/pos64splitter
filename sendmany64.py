@@ -3,10 +3,19 @@ import json
 import kmdrpc
 import sys
 
-CHAIN = input('Please specify chain:')
-AMOUNT = input("Please specify the size of UTXOs:")
-UTXOS = input("Please specify the amount of UTXOs to send to each segid:")
+CHAIN = input('Please specify chain: ')
+balance = float(kmdrpc.getbalance_rpc(CHAIN))
+print('Balance: ' + str(balance))
 
+AMOUNT = input("Please specify the size of UTXOs: ")
+UTXOS = input("Please specify the amount of UTXOs to send to each segid: ")
+total = float(AMOUNT) * int(UTXOS) * 64
+print('Total amount: ' + str(total))
+if total > balance:
+    print('Total sending is ' + str(total-balance) + ' more than your balance. Try again.')
+    segidTotal = balance / 64
+    print('Total avalible per segid is: ' + str(segidTotal))
+    sys.exit()
 
 # iterate addresses list, construct dictionary,
 # with amount as value for each address
@@ -50,4 +59,3 @@ kmdrpc.unlockunspent(CHAIN)
 for i in sendmanyloop_result:
     print(i)
 print('Success!')
-

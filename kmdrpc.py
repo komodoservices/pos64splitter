@@ -62,7 +62,6 @@ def getpubkey_rpc(chain):
         "method": "getinfo",
         "params": []}
     getinfo_result = post_rpc(def_credentials(chain), getinfo_payload)
-
     return(getinfo_result['pubkey'])
 
 
@@ -77,6 +76,15 @@ def unlockunspent(CHAIN):
     return(lockunspent_result)
 
 # VANILLA RPC
+
+def getbalance_rpc(chain):
+    getbalance_payload = {
+        "jsonrpc": "1.0",
+        "id": "python",
+        "method": "getbalance",
+        "params": []}
+    getbalance_result = post_rpc(def_credentials(chain), getbalance_payload)
+    return(getbalance_result)
 
 
 def sendrawtx_rpc(chain, rawtx):
@@ -196,6 +204,15 @@ def lockunspent_rpc(chain, lock_bool, txid_list):
     return(post_rpc(def_credentials(chain), lockunspent_payload))
 
 
+def listunspent_rpc(chain):
+    listunspent_payload = {
+        "jsonrpc": "1.0",
+        "id": "python",
+        "method": "listunspent",
+        "params": []}
+    return(post_rpc(def_credentials(chain), listunspent_payload))
+    
+
 def listlockunspent_rpc(chain):
     listlockunspent_payload = {
         "jsonrpc": "1.0",
@@ -204,3 +221,20 @@ def listlockunspent_rpc(chain):
         "params": []}
     return(post_rpc(def_credentials(chain), listlockunspent_payload))
 
+
+def setpubkey_rpc(chain, pubkey):
+    setpubkey_payload = {
+        "jsonrpc": "1.0",
+        "id": "python",
+        "method": "setpubkey",
+        "params": [pubkey]}
+    return(post_rpc(def_credentials(chain), setpubkey_payload))
+    
+
+def getlastsegidstakes_rpc(chain,depth):
+    getlastsegidstakes_payload = {
+        "jsonrpc": "1.0",
+        "id": "python",
+        "method": "getlastsegidstakes",
+        "params": [depth]}
+    return(post_rpc(def_credentials(chain), getlastsegidstakes_payload))
