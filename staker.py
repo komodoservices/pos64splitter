@@ -87,7 +87,7 @@ if segid == -1:
     }
     createraw_list.append(input_dict)
     listunspent_result = kmdrpc.listunspent_rpc(CHAIN)
-    listunspent_result = sorted(listunspent_result,key=lambda x : (['amount'], x['confirmations']))
+    listunspent_result = sorted(listunspent_result,key=lambda x : (x['amount'], x['confirmations']))
     for unspent in listunspent_result:
         # Check the utxo is spendable and has been notarised at least once, to prevent problems with reorgs.
         if unspent['spendable'] and unspent['confirmations'] > 2:
