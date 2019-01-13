@@ -38,41 +38,35 @@ try:
     with open('list.json') as list:
         segid_addresses = json.load(list)
 except:
-    print('Could not load list.json please make sure it is in the directory where komodod is located. Exiting')
-    sys.exit()
+    sys.exit('Could not load list.json please make sure it is in the directory where komodod is located. Exiting')
 
 # Get pubkey being mined to.
 try:
     pubkey = kmdrpc.getpubkey_rpc(CHAIN)
 except:
-    print('PubKey not set. Exiting')
-    sys.exit(0)
+    sys.exit('PubKey not set. Exiting')
 
 # Get the address of this pubkey.
 try:
     setpubkey_result = kmdrpc.setpubkey_rpc(CHAIN,pubkey)
     address = setpubkey_result['address']
 except:
-    print('Could not get address. Exiting')
-    sys.exit(0)
+    sys.exit('Could not get address. Exiting')
     
 # Get the block and all transactions in it and save for later use.
 try:
     getblock_result = kmdrpc.getblock_rpc(CHAIN, BESTBLOCKHASH, 2)
     coinbase_address = getblock_result['tx'][0]['vout'][0]['scriptPubKey']['addresses'][0]
 except:
-    print('Could not get block. Exiting')
-    sys.exit(0)
+    sys.exit('Could not get block. Exiting')
 
 # If the address of our pubkey matches the coinbase address we mined this block.
 if coinbase_address == address:
     segid = getblock_result['segid']
     if segid == -2:
-        print('SegId not set in block, this should not happen. Exiting.')
-        sys.exit(0)
+        sys.exit('SegId not set in block, this should not happen. Exiting.')
 else:
-    print('Not our block, exit.')
-    sys.exit(0)
+    sys.exit('Not our block, exit.')
     
 txid_list = []
 tx_value = 0
@@ -121,8 +115,7 @@ else:
             tx_value += getrawtx_result['vout'][0]['valueSat']
             staked_from = staked_from_address(CHAIN, getblock_result)
         else:
-            print('The address is not imported. Please check you imported list.json. Exiting.')
-            sys.exit(0)
+            sys.exit('The address is not imported. Please check you imported list.json. Exiting.')
     for txid in txid_list:
         input_dict = {
             "txid": txid,
