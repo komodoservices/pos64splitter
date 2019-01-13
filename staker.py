@@ -2,10 +2,7 @@
 import sys
 import random
 import json
-import re
-import os
-import platform
-from slickrpc import Proxy
+from stakerlib import def_credentials, genvaldump
 
 BESTBLOCKHASH =  sys.argv[1]
 CHAIN = sys.argv[2]
@@ -13,38 +10,6 @@ TXFEE = 5000
 #bitcoin.params = CoinParams
 #BESTBLOCKHASH = kmdrpc.getbestblockhash_rpc(CHAIN)
 
-# fucntion to define rpc_connection
-def def_credentials(chain):
-    rpcport ='';
-    operating_system = platform.system()
-    if operating_system == 'Darwin':
-        ac_dir = os.environ['HOME'] + '/Library/Application Support/Komodo'
-    elif operating_system == 'Linux':
-        ac_dir = os.environ['HOME'] + '/.komodo'
-    elif operating_system == 'Win64':
-        ac_dir = "dont have windows machine now to test"
-    if chain == 'KMD':
-        coin_config_file = str(ac_dir + '/komodo.conf')
-    else:
-        coin_config_file = str(ac_dir + '/' + chain + '/' + chain + '.conf')
-    with open(coin_config_file, 'r') as f:
-        for line in f:
-            l = line.rstrip()
-            if re.search('rpcuser', l):
-                rpcuser = l.replace('rpcuser=', '')
-            elif re.search('rpcpassword', l):
-                rpcpassword = l.replace('rpcpassword=', '')
-            elif re.search('rpcport', l):
-                rpcport = l.replace('rpcport=', '')
-    if len(rpcport) == 0:
-        if chain == 'KMD':
-            rpcport = 7771
-        else:
-            print("rpcport not in conf file, exiting")
-            print("check "+coin_config_file)
-            exit(1)
-    
-    return(Proxy("http://%s:%s@127.0.0.1:%d"%(rpcuser, rpcpassword, int(rpcport))))
     
 # function to get first and last outputs from latest block
 def latest_block_txs(chain, getblock_ret):
@@ -64,11 +29,12 @@ def staked_from_address(chain, getblock_ret):
     pep8fu = getblock_ret['tx'][-1]
     return(pep8fu['vout'][0]['scriptPubKey']['addresses'][0])
 
+
 try:    
     rpc_connection = def_credentials(CHAIN)
 except:
     sys.exit('Could not get connection to daemon. Exiting')
-    
+
 try:
     with open('list.json') as list:
         segid_addresses = json.load(list)
