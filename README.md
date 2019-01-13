@@ -8,9 +8,9 @@ Currently, this will maintain a static number of UTXOs. This is important becaus
 
 ## Dependencies
 ```shell
-sudo apt-get install python3
+sudo apt-get install python3 libgnutls28-dev libssl-dev
 sudo apt-get install python3-pip
-pip3 install requests python-bitcoinlib base58
+pip3 install base58 slick-bitcoinrpc
 ```
 
 [komodod](https://github.com/StakedChain/komodo) installed with your assetchain running.
@@ -89,3 +89,28 @@ if segid >= 0 :
 
     if yes, use alrights code to combine this coinbase utxo with the utxo that staked it.
     
+    
+### Withdraw 
+
+Get chain name 
+
+show balance 
+
+ask how much needing to send 
+
+Get address to send to
+
+get listunspent call sort to least confirms at top. iterate down this list until have enough balance
+
+--> Add segid to listunspent? (make sure we dont take too many from one segid?)
+
+Second method:
+
+put utxos into object sorted by segid .. like this:
+    listunspent, sort by confirms.
+    iterate down listunspent 
+    put each utxo into list of segids utxos['segid'].append(utxo)
+    should return object with each segid's utxos sorted by confirms.
+
+
+get percentage of balance from user

@@ -1,21 +1,51 @@
 #!/usr/bin/env python3
-import kmdrpc
-import os.path
 import sys
-import bitcoin
 import random
 import json
-from bitcoin.wallet import P2PKHBitcoinAddress
-from bitcoin.core import x
-from conf import CoinParams
+import re
+import os
+import platform
+from slickrpc import Proxy
 
 BESTBLOCKHASH =  sys.argv[1]
 CHAIN = sys.argv[2]
 TXFEE = 5000
-bitcoin.params = CoinParams
+#bitcoin.params = CoinParams
 #BESTBLOCKHASH = kmdrpc.getbestblockhash_rpc(CHAIN)
 
-
+# fucntion to define rpc_connection
+def def_credentials(chain):
+    rpcport ='';
+    operating_system = platform.system()
+    if operating_system == 'Darwin':
+        ac_dir = os.environ['HOME'] + '/Library/Application Support/Komodo'
+    elif operating_system == 'Linux':
+        ac_dir = os.environ['HOME'] + '/.komodo'
+    elif operating_system == 'Win64':
+        ac_dir = "dont have windows machine now to test"
+    if chain == 'KMD':
+        coin_config_file = str(ac_dir + '/komodo.conf')
+    else:
+        coin_config_file = str(ac_dir + '/' + chain + '/' + chain + '.conf')
+    with open(coin_config_file, 'r') as f:
+        for line in f:
+            l = line.rstrip()
+            if re.search('rpcuser', l):
+                rpcuser = l.replace('rpcuser=', '')
+            elif re.search('rpcpassword', l):
+                rpcpassword = l.replace('rpcpassword=', '')
+            elif re.search('rpcport', l):
+                rpcport = l.replace('rpcport=', '')
+    if len(rpcport) == 0:
+        if chain == 'KMD':
+            rpcport = 7771
+        else:
+            print("rpcport not in conf file, exiting")
+            print("check "+coin_config_file)
+            exit(1)
+    
+    return(Proxy("http://%s:%s@127.0.0.1:%d"%(rpcuser, rpcpassword, int(rpcport))))
+    
 # function to get first and last outputs from latest block
 def latest_block_txs(chain, getblock_ret):
     # get txs in latest block
@@ -33,6 +63,11 @@ def staked_from_address(chain, getblock_ret):
     # get txs in latest block
     pep8fu = getblock_ret['tx'][-1]
     return(pep8fu['vout'][0]['scriptPubKey']['addresses'][0])
+
+try:    
+    rpc_connection = def_credentials(CHAIN)
+except:
+    sys.exit('Could not get connection to daemon. Exiting')
     
 try:
     with open('list.json') as list:
@@ -42,20 +77,20 @@ except:
 
 # Get pubkey being mined to.
 try:
-    pubkey = kmdrpc.getpubkey_rpc(CHAIN)
+    pubkey = rpc_connection.getinfo()['pubkey']
 except:
     sys.exit('PubKey not set. Exiting')
 
 # Get the address of this pubkey.
 try:
-    setpubkey_result = kmdrpc.setpubkey_rpc(CHAIN,pubkey)
+    setpubkey_result = rpc_connection.setpubkey(pubkey)
     address = setpubkey_result['address']
 except:
     sys.exit('Could not get address. Exiting')
     
 # Get the block and all transactions in it and save for later use.
 try:
-    getblock_result = kmdrpc.getblock_rpc(CHAIN, BESTBLOCKHASH, 2)
+    getblock_result = rpc_connection.getblock(BESTBLOCKHASH, 2)
     coinbase_address = getblock_result['tx'][0]['vout'][0]['scriptPubKey']['addresses'][0]
 except:
     sys.exit('Could not get block. Exiting')
@@ -80,7 +115,10 @@ if segid == -1:
         "vout": 0
     }
     createraw_list.append(input_dict)
-    listunspent_result = kmdrpc.listunspent_rpc(CHAIN)
+    try:
+        listunspent_result = rpc_connection.listunspent()
+    except Exception as e:
+        sys.exit(e)
     listunspent_result = sorted(listunspent_result,key=lambda x : (x['amount'], x['confirmations']))
     for unspent in listunspent_result:
         # Check the utxo is spendable and has been notarised at least once, to prevent problems with reorgs.
@@ -95,12 +133,15 @@ if segid == -1:
     # check height so we dont count early chain or throw an error.
     if getblock_result['height'] > 1800:
         # find out what segids have staked the least in the last day and randomly choose one to send our funds too.
-        getlastsegidstakes_result = kmdrpc.getlastsegidstakes_rpc(CHAIN,1440)['SegIds']
+        try:
+            getlastsegidstakes_result = rpc_connection.getlastsegidstakes(1440)['SegIds']
+        except Exception as e:
+            sys.exit(e)
         usable_segids = []
-        for segid, stakes in getlastsegidstakes_result.items():
+        for _segid, stakes in getlastsegidstakes_result.items():
             if stakes < 22:
-                usable_segids.append(segid)
-        segid_to_use = usable_segids[random.randint(0,len(usable_segids))]
+                usable_segids.append(_segid)
+        segid_to_use = int(usable_segids[random.randint(0,len(usable_segids))])
     else:
         segid_to_use = random.randint(0,63)
     staked_from = segid_addresses[segid_to_use][3]
@@ -108,9 +149,15 @@ else:
     # This means it was staked.
     block_txs = latest_block_txs(CHAIN, getblock_result)
     for address in block_txs:
-        validateaddress_result = kmdrpc.validateaddress_rpc(CHAIN, address)
+        try:
+            validateaddress_result = rpc_connection.validateaddress(address)
+        except Exception as e:
+            sys.exit(e)
         if validateaddress_result['ismine']:
-            getrawtx_result = kmdrpc.getrawtransaction_rpc(CHAIN, block_txs[address])
+            try:
+                getrawtx_result = rpc_connection.getrawtransaction(block_txs[address],1)
+            except Exception as e:
+                sys.exit(e)
             txid_list.append(block_txs[address])
             tx_value += getrawtx_result['vout'][0]['valueSat']
             staked_from = staked_from_address(CHAIN, getblock_result)
@@ -126,12 +173,26 @@ else:
 output_dict = {
         staked_from: ((tx_value - TXFEE) / 100000000)
     }
-    
-unsigned_hex = kmdrpc.createrawtransaction_rpc(CHAIN, createraw_list, output_dict)
-signrawtx_result = kmdrpc.signrawtransaction_rpc(CHAIN, unsigned_hex)
+
+try:
+    unsigned_hex = rpc_connection.createrawtransaction(createraw_list, output_dict)
+except Exception as e:
+    sys.exit(e)
+
+try:
+    signrawtx_result = rpc_connection.signrawtransaction(unsigned_hex)
+except Exception as e:
+    sys.exit(e)
+
 signed_hex = signrawtx_result['hex']
-sendrawtx_result = kmdrpc.sendrawtx_rpc(CHAIN, signed_hex)
+
+try:
+    sendrawtx_result = rpc_connection.sendrawtransaction(signed_hex)
+except Exception as e:
+    sys.exit(e)
+
 sendrawtxid = sendrawtx_result
+
 if segid != -1:
     print('Staked from segid ' + str(segid) + ' ' + sendrawtxid)
 else:
