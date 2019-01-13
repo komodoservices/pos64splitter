@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import json
-from staker import def_credentials
+from stakerlib import def_credentials
 
     
 # function to unlock ALL lockunspent UTXOs

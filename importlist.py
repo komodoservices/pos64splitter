@@ -2,7 +2,7 @@
 import os
 import sys
 import json
-from staker import def_credentials
+from stakerlib import def_credentials
 
 if not os.path.isfile("list.json"):
     sys.exit('No list.json file present. Use genaddresses.py script to generate one.')

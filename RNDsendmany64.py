@@ -2,7 +2,7 @@
 import random 
 import sys
 import json
-from staker import def_credentials
+from stakerlib import def_credentials
 from sendmany64 import sendmanyloop, sendmany64, unlockunspent
 
 
