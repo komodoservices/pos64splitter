@@ -2,7 +2,7 @@
 import sys
 import json
 import os.path
-from staker import def_credentials, genvaldump
+from stakerlib import def_credentials, genvaldump
 
 if os.path.isfile("list.json"):
     print('Already have list.json, move it if you would like to '
