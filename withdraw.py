@@ -126,7 +126,7 @@ amount = float(input('Amount? '))
 if amount < 0 or amount > totalbalance:
     sys.exit('Too poor!')
     
-print('Sending ' + amount + ' to ' + address)
+print('Sending ' + str(amount) + ' to ' + address)
 ret = input('Are you happy with these? ').lower()
 if ret.startswith('n'):
     sys.exit('You are not happy?')
