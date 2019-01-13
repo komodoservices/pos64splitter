@@ -125,6 +125,12 @@ if len(address) != 34:
 amount = float(input('Amount? '))
 if amount < 0 or amount > totalbalance:
     sys.exit('Too poor!')
+    
+print('Sending ' + amount + ' to ' + address)
+ret = input('Are you happy with these? ').lower()
+if ret.startswith('n'):
+    sys.exit('You are not happy?')
+
 
 # send coins.
 txid_result = rpc_connection.sendtoaddress(address, amount)
