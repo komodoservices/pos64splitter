@@ -1,45 +1,11 @@
 #!/usr/bin/env python3
 import sys
 import json
-import re
-import os
-import platform
-from slickrpc import Proxy
+from staker import def_credentials
 
-def def_credentials(chain):
-    rpcport ='';
-    operating_system = platform.system()
-    if operating_system == 'Darwin':
-        ac_dir = os.environ['HOME'] + '/Library/Application Support/Komodo'
-    elif operating_system == 'Linux':
-        ac_dir = os.environ['HOME'] + '/.komodo'
-    elif operating_system == 'Win64':
-        ac_dir = "dont have windows machine now to test"
-    if chain == 'KMD':
-        coin_config_file = str(ac_dir + '/komodo.conf')
-    else:
-        coin_config_file = str(ac_dir + '/' + chain + '/' + chain + '.conf')
-    with open(coin_config_file, 'r') as f:
-        for line in f:
-            l = line.rstrip()
-            if re.search('rpcuser', l):
-                rpcuser = l.replace('rpcuser=', '')
-            elif re.search('rpcpassword', l):
-                rpcpassword = l.replace('rpcpassword=', '')
-            elif re.search('rpcport', l):
-                rpcport = l.replace('rpcport=', '')
-    if len(rpcport) == 0:
-        if chain == 'KMD':
-            rpcport = 7771
-        else:
-            print("rpcport not in conf file, exiting")
-            print("check "+coin_config_file)
-            exit(1)
-    
-    return(Proxy("http://%s:%s@127.0.0.1:%d"%(rpcuser, rpcpassword, int(rpcport))))
     
 # function to unlock ALL lockunspent UTXOs
-def unlockunspent():
+def unlockunspent(rpc_connection):
     try:
         listlockunspent_result = rpc_connection.listlockunspent()
     except Exception as e:
@@ -52,6 +18,7 @@ def unlockunspent():
     except Exception as e:
         sys.exit(e)
     return(lockunspent_result)
+
 
 CHAIN = input('Please specify chain: ')
 try:
@@ -72,9 +39,10 @@ if total > balance:
     segidTotal = balance / 64
     sys.exit('Total avalible per segid is: ' + str(segidTotal))
 
+
 # iterate addresses list, construct dictionary,
 # with amount as value for each address
-def sendmany64(amount):
+def sendmany64(rpc_connection, amount):
     addresses_dict = {}
     with open('list.json') as key_list:
         json_data = json.load(key_list)
@@ -86,11 +54,12 @@ def sendmany64(amount):
     sendmany_result = rpc_connection.sendmany("", addresses_dict)
     return(sendmany_result)
 
+
 # function to do sendmany64 UTXOS times, locking all UTXOs except change
-def sendmanyloop(amount, utxos):
+def sendmanyloop(rpc_connection, amount, utxos):
     txid_list = []
     for i in range(int(utxos)):
-        sendmany64_txid = sendmany64(AMOUNT)
+        sendmany64_txid = sendmany64(rpc_connection, AMOUNT)
         txid_list.append(sendmany64_txid)
         getrawtx_result = rpc_connection.getrawtransaction(sendmany64_txid, 1)
         lockunspent_list = []
@@ -107,9 +76,10 @@ def sendmanyloop(amount, utxos):
         lockunspent_result = rpc_connection.lockunspent(False, lockunspent_list)
     return(txid_list)
 
-sendmanyloop_result = sendmanyloop(AMOUNT, UTXOS)
+
+sendmanyloop_result = sendmanyloop(rpc_connection, AMOUNT, UTXOS)
 # unlock all locked utxos
-unlockunspent()
+unlockunspent(rpc_connection)
 for i in sendmanyloop_result:
     print(i)
 print('Success!')

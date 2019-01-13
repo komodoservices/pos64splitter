@@ -13,6 +13,7 @@ TXFEE = 5000
 #bitcoin.params = CoinParams
 #BESTBLOCKHASH = kmdrpc.getbestblockhash_rpc(CHAIN)
 
+
 # fucntion to define rpc_connection
 def def_credentials(chain):
     rpcport ='';
@@ -45,6 +46,23 @@ def def_credentials(chain):
             exit(1)
     
     return(Proxy("http://%s:%s@127.0.0.1:%d"%(rpcuser, rpcpassword, int(rpcport))))
+
+
+# generate address, validate address, dump private key
+def genvaldump(rpc_connection):
+    # get new address
+    address = rpc_connection.getnewaddress()
+    # validate address
+    validateaddress_result = rpc_connection.validateaddress(address)
+    segid = validateaddress_result['segid']
+    pubkey = validateaddress_result['pubkey']
+    address = validateaddress_result['address']
+    # dump private key for the address
+    privkey = rpc_connection.dumpprivkey(address)
+    # function output
+    output = [segid, pubkey, privkey, address]
+    return(output)
+
     
 # function to get first and last outputs from latest block
 def latest_block_txs(chain, getblock_ret):
@@ -64,11 +82,12 @@ def staked_from_address(chain, getblock_ret):
     pep8fu = getblock_ret['tx'][-1]
     return(pep8fu['vout'][0]['scriptPubKey']['addresses'][0])
 
+
 try:    
     rpc_connection = def_credentials(CHAIN)
 except:
     sys.exit('Could not get connection to daemon. Exiting')
-    
+
 try:
     with open('list.json') as list:
         segid_addresses = json.load(list)
