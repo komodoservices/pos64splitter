@@ -111,6 +111,7 @@ put utxos into object sorted by segid .. like this:
     iterate down listunspent 
     put each utxo into list of segids utxos['segid'].append(utxo)
     should return object with each segid's utxos sorted by confirms.
+    sort each segid by amount
 
 
 get percentage of balance from user
