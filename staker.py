@@ -108,7 +108,7 @@ if segid == -1:
         for _segid, stakes in getlastsegidstakes_result['SegIds'].items():
             if stakes < averagestakes:
                 usable_segids.append(_segid)
-        segid_to_use = int(usable_segids[random.randint(0,len(usable_segids))])
+        segid_to_use = int(usable_segids[random.randint(0,len(usable_segids)-1)])
     else:
         segid_to_use = random.randint(0,63)
     staked_from = segid_addresses[segid_to_use][3]
