@@ -1,44 +1,7 @@
 #!/usr/bin/env python3
 import sys
-import json
-import re
-import os
-import platform
-import pprint
-from slickrpc import Proxy
-
-def def_credentials(chain):
-    rpcport ='';
-    operating_system = platform.system()
-    if operating_system == 'Darwin':
-        ac_dir = os.environ['HOME'] + '/Library/Application Support/Komodo'
-    elif operating_system == 'Linux':
-        ac_dir = os.environ['HOME'] + '/.komodo'
-    elif operating_system == 'Win64':
-        ac_dir = "dont have windows machine now to test"
-    if chain == 'KMD':
-        coin_config_file = str(ac_dir + '/komodo.conf')
-    else:
-        coin_config_file = str(ac_dir + '/' + chain + '/' + chain + '.conf')
-    with open(coin_config_file, 'r') as f:
-        for line in f:
-            l = line.rstrip()
-            if re.search('rpcuser', l):
-                rpcuser = l.replace('rpcuser=', '')
-            elif re.search('rpcpassword', l):
-                rpcpassword = l.replace('rpcpassword=', '')
-            elif re.search('rpcport', l):
-                rpcport = l.replace('rpcport=', '')
-    if len(rpcport) == 0:
-        if chain == 'KMD':
-            rpcport = 7771
-        else:
-            print("rpcport not in conf file, exiting")
-            print("check "+coin_config_file)
-            exit(1)
-    
-    return(Proxy("http://%s:%s@127.0.0.1:%d"%(rpcuser, rpcpassword, int(rpcport))))
-    
+import stakerlib 
+   
 # function to unlock ALL lockunspent UTXOs
 def unlockunspent():
     try:
@@ -64,7 +27,7 @@ def extract_segid(_segid,unspents):
 
 CHAIN = input('Please specify chain: ')
 try:
-    rpc_connection = def_credentials(CHAIN)
+    rpc_connection = stakerlib.def_credentials(CHAIN)
 except Exception as e:
     sys.exit(e)
 balance = float(rpc_connection.getbalance())
@@ -82,7 +45,6 @@ except Exception as e:
 
 # sort into utxos per segid.
 segids = []
-pp = pprint.PrettyPrinter(indent=4)
 
 for i in range(0,63):
     segid = extract_segid(i, listunspent_result)
@@ -90,9 +52,12 @@ for i in range(0,63):
 
 lockunspent_list = []
 # Sort it by value and confirms. We want to keep large and old utxos. So largest and oldest at top.
+# When the wallet has small number of utxo per segid ( < 10 )the percentage should be static 50, other % give unexpected results.
 for segid in segids:
-    segid = sorted(segid, key=lambda x : (-x['amount'], -x['confirmations'], )) # ? likley some improvment here age vs. size ? this mightr work better if your utxos are mostly the same size. ;)
-    numutxo = len(segid) * (PERC/100)
+    # likley some improvment here age vs. size ? 
+    # there should maybe be a utxo score, that includes age and size and locks utxos with highest score.
+    segid = sorted(segid, key=lambda x : (-x['amount'], -x['confirmations']))
+    numutxo = int(len(segid) * (PERC/100))
     i = 0
     for unspent in segid:
         output_dict = {
@@ -101,7 +66,7 @@ for segid in segids:
             }
         lockunspent_list.append(output_dict)
         i = i + 1
-        if i == int(numutxo):
+        if i >= numutxo:
             break
 
 # Lock % defined of each segids utxos.
@@ -117,10 +82,11 @@ for unspent in listunspent_result:
     totalbalance = float(totalbalance) + float(unspent['amount'])
     
 print('Balance avalibe to send: ' + str(totalbalance))
-
 address = input('Address? ')
 if len(address) != 34:
-    sys.ext('invalid address')  # ? can be improved 
+    # can be improved, use validate address?
+    unlockunspent()
+    sys.exit('invalid address')  
     
 amount = float(input('Amount? '))
 if amount < 0 or amount > totalbalance:
@@ -129,8 +95,8 @@ if amount < 0 or amount > totalbalance:
 print('Sending ' + str(amount) + ' to ' + address)
 ret = input('Are you happy with these? ').lower()
 if ret.startswith('n'):
+    unlockunspent()
     sys.exit('You are not happy?')
-
 
 # send coins.
 txid_result = rpc_connection.sendtoaddress(address, amount)
