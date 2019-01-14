@@ -5,10 +5,10 @@ import json
 import stakerlib 
 
 # function to do sendmany64 UTXOS times, locking all UTXOs except change
-def RNDsendmanyloop(amounts):
+def RNDsendmanyloop(rpc_connection, amounts):
     txid_list = []
     for amount in amounts:
-        sendmany64_txid = stakerlib.sendmany64(amount)
+        sendmany64_txid = stakerlib.sendmany64(rpc_connection, amount)
         txid_list.append(sendmany64_txid)
         getrawtx_result = rpc_connection.getrawtransaction(sendmany64_txid, 1)
         lockunspent_list = []
@@ -76,7 +76,7 @@ while finished == False:
     if totalamnt > balance-2:
         finished = True
 
-sendmanyloop_result = RNDsendmanyloop(AMOUNTS)
+sendmanyloop_result = RNDsendmanyloop(rpc_connection, AMOUNTS)
 # unlock all locked utxos
 stakerlib.unlockunspent(rpc_connection)
 for i in sendmanyloop_result:

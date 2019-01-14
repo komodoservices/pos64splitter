@@ -10,7 +10,7 @@ if os.path.isfile("list.json"):
           ' the already existing list.py to a given chain.')
     sys.exit(0)
 
-CHAIN = input('Please specify chain:')
+CHAIN = input('Please specify chain: ')
 
 # create rpc_connection
 try:

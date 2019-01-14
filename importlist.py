@@ -7,7 +7,7 @@ import stakerlib
 if not os.path.isfile("list.json"):
     sys.exit('No list.json file present. Use genaddresses.py script to generate one.')
 
-CHAIN = input('Please specify chain to import list.json keys to:')
+CHAIN = input('Please specify chain to import list.json keys to: ')
 
 rpc_connection = stakerlib.def_credentials(CHAIN)
 
