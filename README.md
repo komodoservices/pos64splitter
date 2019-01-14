@@ -92,26 +92,16 @@ if segid >= 0 :
     
 ### Withdraw 
 
-Get chain name 
+Withdraw script is for withdrawing funds from a staking node, without messing up utxo distribution. Works like this:
 
-show balance 
-
-ask how much needing to send 
-
-Get address to send to
-
-get listunspent call sort to least confirms at top. iterate down this list until have enough balance
-
---> Add segid to listunspent? (make sure we dont take too many from one segid?)
-
-Second method:
-
-put utxos into object sorted by segid .. like this:
-    listunspent, sort by confirms.
-    iterate down listunspent 
-    put each utxo into list of segids utxos['segid'].append(utxo)
-    should return object with each segid's utxos sorted by confirms.
-    sort each segid by amount
-
-
-get percentage of balance from user
+    Asks for percentage you want locked (kept). 
+    
+    It then counts how many utxo per segid. 
+    
+    Locks the largest and oldest utxos in each segid up to the % you asked.
+    
+    Gives balance of utxos remaning that are not locked.  These should be the smallest and newest utxo's in each segid.
+    
+    Then lets you send some coins to an address. 
+    
+    Unlocks utxos again.
