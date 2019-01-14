@@ -52,3 +52,32 @@ def genvaldump(rpc_connection):
     # function output
     output = [segid, pubkey, privkey, address]
     return (output)
+
+# function to unlock ALL lockunspent UTXOs
+def unlockunspent(rpc_connection):
+    try:
+        listlockunspent_result = rpc_connection.listlockunspent()
+    except Exception as e:
+        sys.exit(e)
+    unlock_list = []
+    for i in listlockunspent_result:
+        unlock_list.append(i)
+    try:
+        lockunspent_result = rpc_connection.lockunspent(True, unlock_list)
+    except Exception as e:
+        sys.exit(e)
+    return(lockunspent_result)
+    
+# iterate addresses list, construct dictionary,
+# with amount as value for each address
+def sendmany64(rpc_connection, amount):
+    addresses_dict = {}
+    with open('list.json') as key_list:
+        json_data = json.load(key_list)
+        for i in json_data:
+            address = i[3]
+            addresses_dict[address] = amount
+
+    # make rpc call, issue transaction
+    sendmany_result = rpc_connection.sendmany("", addresses_dict)
+    return(sendmany_result)

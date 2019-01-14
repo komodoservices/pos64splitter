@@ -2,13 +2,32 @@
 import random 
 import sys
 import json
-from stakerlib import def_credentials
-from sendmany64 import sendmanyloop, sendmany64, unlockunspent
+import stakerlib 
 
+# function to do sendmany64 UTXOS times, locking all UTXOs except change
+def RNDsendmanyloop(amounts):
+    txid_list = []
+    for amount in amounts:
+        sendmany64_txid = stakerlib.sendmany64(amount)
+        txid_list.append(sendmany64_txid)
+        getrawtx_result = rpc_connection.getrawtransaction(sendmany64_txid, 1)
+        lockunspent_list = []
+        # find change output, lock all other outputs
+        for vout in getrawtx_result['vout']:
+            if vout['value'] != float(amount):
+                change_output = vout['n']
+            else:
+                output_dict = {
+                    "txid": sendmany64_txid,
+                    "vout": vout['n']
+                    }
+                lockunspent_list.append(output_dict)
+        lockunspent_result = rpc_connection.lockunspent(False, lockunspent_list)
+    return(txid_list)
 
 CHAIN = input('Please specify chain: ')
 try:
-    rpc_connection = def_credentials(CHAIN)
+    rpc_connection = stakerlib.def_credentials(CHAIN)
 except Exception as e:
     sys.exit(e)
 
@@ -57,9 +76,9 @@ while finished == False:
     if totalamnt > balance-2:
         finished = True
 
-sendmanyloop_result = sendmanyloop(AMOUNTS)
+sendmanyloop_result = RNDsendmanyloop(AMOUNTS)
 # unlock all locked utxos
-unlockunspent(rpc_connection)
+stakerlib.unlockunspent(rpc_connection)
 for i in sendmanyloop_result:
     print(i)
 print('Success!')

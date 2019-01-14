@@ -2,7 +2,7 @@
 import sys
 import json
 import os.path
-from stakerlib import def_credentials, genvaldump
+import stakerlib
 
 if os.path.isfile("list.json"):
     print('Already have list.json, move it if you would like to '
@@ -14,14 +14,14 @@ CHAIN = input('Please specify chain:')
 
 # create rpc_connection
 try:
-    rpc_connection = def_credentials(CHAIN)
+    rpc_connection = stakerlib.def_credentials(CHAIN)
 except Exception as e:
     sys.exit(e)
     
 # fill a list of sigids with matching segid address data
 segids = {}
 while len(segids.keys()) < 64:
-    genvaldump_result = genvaldump(rpc_connection)
+    genvaldump_result = stakerlib.genvaldump(rpc_connection)
     segid = genvaldump_result[0]
     if segid in segids:
         pass

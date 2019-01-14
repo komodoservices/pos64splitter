@@ -2,7 +2,7 @@
 import sys
 import random
 import json
-from stakerlib import def_credentials, genvaldump
+import stakerlib
 
 BESTBLOCKHASH =  sys.argv[1]
 CHAIN = sys.argv[2]
@@ -31,7 +31,7 @@ def staked_from_address(chain, getblock_ret):
 
 
 try:    
-    rpc_connection = def_credentials(CHAIN)
+    rpc_connection = stakerlib.def_credentials(CHAIN)
 except:
     sys.exit('Could not get connection to daemon. Exiting')
 

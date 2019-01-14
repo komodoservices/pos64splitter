@@ -1,28 +1,11 @@
 #!/usr/bin/env python3
 import sys
 import json
-from stakerlib import def_credentials
-
-    
-# function to unlock ALL lockunspent UTXOs
-def unlockunspent(rpc_connection):
-    try:
-        listlockunspent_result = rpc_connection.listlockunspent()
-    except Exception as e:
-        sys.exit(e)
-    unlock_list = []
-    for i in listlockunspent_result:
-        unlock_list.append(i)
-    try:
-        lockunspent_result = rpc_connection.lockunspent(True, unlock_list)
-    except Exception as e:
-        sys.exit(e)
-    return(lockunspent_result)
-
+import stakerlib
 
 CHAIN = input('Please specify chain: ')
 try:
-    rpc_connection = def_credentials(CHAIN)
+    rpc_connection = stakerlib.def_credentials(CHAIN)
 except Exception as e:
     sys.exit(e)
 balance = float(rpc_connection.getbalance())
@@ -39,27 +22,11 @@ if total > balance:
     segidTotal = balance / 64
     sys.exit('Total avalible per segid is: ' + str(segidTotal))
 
-
-# iterate addresses list, construct dictionary,
-# with amount as value for each address
-def sendmany64(rpc_connection, amount):
-    addresses_dict = {}
-    with open('list.json') as key_list:
-        json_data = json.load(key_list)
-        for i in json_data:
-            address = i[3]
-            addresses_dict[address] = amount
-
-    # make rpc call, issue transaction
-    sendmany_result = rpc_connection.sendmany("", addresses_dict)
-    return(sendmany_result)
-
-
 # function to do sendmany64 UTXOS times, locking all UTXOs except change
 def sendmanyloop(rpc_connection, amount, utxos):
     txid_list = []
     for i in range(int(utxos)):
-        sendmany64_txid = sendmany64(rpc_connection, AMOUNT)
+        sendmany64_txid = stakerlib.sendmany64(rpc_connection, amount)
         txid_list.append(sendmany64_txid)
         getrawtx_result = rpc_connection.getrawtransaction(sendmany64_txid, 1)
         lockunspent_list = []
@@ -76,10 +43,9 @@ def sendmanyloop(rpc_connection, amount, utxos):
         lockunspent_result = rpc_connection.lockunspent(False, lockunspent_list)
     return(txid_list)
 
-
 sendmanyloop_result = sendmanyloop(rpc_connection, AMOUNT, UTXOS)
 # unlock all locked utxos
-unlockunspent(rpc_connection)
+stakerlib.unlockunspent(rpc_connection)
 for i in sendmanyloop_result:
     print(i)
 print('Success!')
