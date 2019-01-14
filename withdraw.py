@@ -86,10 +86,11 @@ address = input('Address? ')
 if len(address) != 34:
     # can be improved, use validate address?
     unlockunspent()
-    sys.exit('invalid address')  
+    sys.exit('invalid address')
     
 amount = float(input('Amount? '))
 if amount < 0 or amount > totalbalance:
+    unlockunspent()
     sys.exit('Too poor!')
     
 print('Sending ' + str(amount) + ' to ' + address)
