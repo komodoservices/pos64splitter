@@ -100,12 +100,13 @@ if segid == -1:
     if getblock_result['height'] > 1800:
         # find out what segids have staked the least in the last day and randomly choose one to send our funds too.
         try:
-            getlastsegidstakes_result = rpc_connection.getlastsegidstakes(1440)['SegIds']
+            getlastsegidstakes_result = rpc_connection.getlastsegidstakes(1440)
         except Exception as e:
             sys.exit(e)
         usable_segids = []
-        for _segid, stakes in getlastsegidstakes_result.items():
-            if stakes < 22:
+        averagestakes = int((1440 - int(getlastsegidstakes_result['PoW'])) / 64)
+        for _segid, stakes in getlastsegidstakes_result['SegIds'].items():
+            if stakes < averagestakes:
                 usable_segids.append(_segid)
         segid_to_use = int(usable_segids[random.randint(0,len(usable_segids))])
     else:

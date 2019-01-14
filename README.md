@@ -77,7 +77,7 @@ if -1 send PoW mined coinbase to :
 
         get last segid stakes 1440 blocks (last24H)
 
-        select all segids under 22 stakes (average stakes per segid in 24H)
+        select all segids under average stakes per segid in 24H
 
         randomly choose one to get segid we will send to.        
 
@@ -100,7 +100,7 @@ Withdraw script is for withdrawing funds from a staking node, without messing up
     
     Locks the largest and oldest utxos in each segid up to the % you asked.
     
-    Gives balance of utxos remaning that are not locked.  These should be the smallest and newest utxo's in each segid.
+    Gives balance of utxos remaning that are not locked.  These should be the smallest and newest utxo's in each segid. The least likely to stake.
     
     Then lets you send some coins to an address. 
     
