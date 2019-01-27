@@ -33,41 +33,48 @@ def staked_from_address(chain, getblock_ret):
 try:    
     rpc_connection = stakerlib.def_credentials(CHAIN)
 except:
-    sys.exit('Could not get connection to daemon. Exiting')
+    print('Could not get connection to daemon. Exiting')
+    sys.exit(0)
 
 try:
     with open('list.json') as list:
         segid_addresses = json.load(list)
 except:
-    sys.exit('Could not load list.json please make sure it is in the directory where komodod is located. Exiting')
+    print('Could not load list.json please make sure it is in the directory where komodod is located. Exiting')
+    sys.exit(0)
 
 # Get pubkey being mined to.
 try:
     pubkey = rpc_connection.getinfo()['pubkey']
 except:
-    sys.exit('PubKey not set. Exiting')
+    print('PubKey not set. Exiting')
+    sys.exit(0)
 
 # Get the address of this pubkey.
 try:
     setpubkey_result = rpc_connection.setpubkey(pubkey)
     address = setpubkey_result['address']
 except:
-    sys.exit('Could not get address. Exiting')
+    print('Could not get address. Exiting')
+    sys.exit(0)
     
 # Get the block and all transactions in it and save for later use.
 try:
     getblock_result = rpc_connection.getblock(BESTBLOCKHASH, 2)
     coinbase_address = getblock_result['tx'][0]['vout'][0]['scriptPubKey']['addresses'][0]
 except:
-    sys.exit('Could not get block. Exiting')
+    print('Could not get block. Exiting')
+    sys.exit(0)
 
 # If the address of our pubkey matches the coinbase address we mined this block.
 if coinbase_address == address:
     segid = getblock_result['segid']
     if segid == -2:
-        sys.exit('SegId not set in block, this should not happen. Exiting.')
+        print('SegId not set in block, this should not happen. Exiting.')
+        sys.exit(0)
 else:
-    sys.exit('Not our block, exit.')
+    print('Not our block, exit.')
+    sys.exit(0)
     
 txid_list = []
 tx_value = 0
@@ -129,7 +136,8 @@ else:
             tx_value += getrawtx_result['vout'][0]['valueSat']
             staked_from = staked_from_address(CHAIN, getblock_result)
         else:
-            sys.exit('The address is not imported. Please check you imported list.json. Exiting.')
+            print('The address is not imported. Please check you imported list.json. Exiting.')
+            sys.exit(0)
     for txid in txid_list:
         input_dict = {
             "txid": txid,
