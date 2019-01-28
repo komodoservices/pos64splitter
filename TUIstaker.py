@@ -47,22 +47,24 @@ def load_conf():
     return(staker_conf)
 
 def initial_menu(staker_conf):
-    print('\n')
+    print('\n===============')
     menu_item = 0
     for i in staker_conf:
         print(str(menu_item) + ' | ' + str(i[0]))
         menu_item += 1
-    print(str(len(staker_conf)) + ' | <Add/remove chain>\n')
-    print('q | Exit TUI\n')
+    print('\n' + str(len(staker_conf)) + ' | <Add/remove chain>')
+    print('q | Exit TUI')
+    print('===============\n')
 
 def print_menu(menu_list):
-    print('\n')
+    print('\n===============')
     menu_item = 0
     for i in menu_list:
         print(str(menu_item) + ' | ' + str(i))
         menu_item += 1
-    print(str(len(menu_list)) + ' | <return to previous menu>\n')
-    print('q | Exit TUI\n')
+    print('\n' + str(len(menu_list)) + ' | <return to previous menu>')
+    print('q | Exit TUI')
+    print('===============\n')
 
 def select_loop():
     staker_conf = load_conf()
