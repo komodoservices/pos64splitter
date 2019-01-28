@@ -69,6 +69,21 @@ def unlockunspent(rpc_connection):
     except Exception as e:
         sys.exit(e)
     return(lockunspent_result)
+
+# function to unlock ALL lockunspent UTXOs
+def unlockunspent():
+    try:
+        listlockunspent_result = rpc_connection.listlockunspent()
+    except Exception as e:
+        sys.exit(e)
+    unlock_list = []
+    for i in listlockunspent_result:
+        unlock_list.append(i)
+    try:
+        lockunspent_result = rpc_connection.lockunspent(True, unlock_list)
+    except Exception as e:
+        sys.exit(e)
+    return(lockunspent_result)
     
 # iterate addresses list, construct dictionary,
 # with amount as value for each address
@@ -115,7 +130,7 @@ def sendmany64_TUI(chain):
     print('Balance: ' + str(balance))
 
     AMOUNT = input("Please specify the size of UTXOs: ")
-    if int(AMOUNT) < 1:
+    if float(AMOUNT) < float(1):
         print('Cant stake coin amounts less than 1 coin, try again.')
         return(0)
     UTXOS = input("Please specify the amount of UTXOs to send to each segid: ")
