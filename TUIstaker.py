@@ -43,7 +43,7 @@ def load_conf():
         user_input = input('No staker.conf conf file, specify a chain to begin:')
         staker_conf.append([user_input])
         with open('staker.conf', "a+") as f:
-            json.dump([staker_conf], f)
+            json.dump(staker_conf, f)
     return(staker_conf)
 
 def initial_menu(staker_conf):
