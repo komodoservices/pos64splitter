@@ -96,6 +96,7 @@ def select_loop():
 def chain_loop(chain):
     try:    
         rpc_connection = stakerlib.def_credentials(chain)
+        dummy = rpc_connection.getbalance() # test connection
     except:
         print('Could not connect to daemon. ' + chain + ' is not running or rpc creds not found.')
         select_loop()
@@ -105,21 +106,19 @@ def chain_loop(chain):
         if int(selection) == len(chain_menu):
             select_loop()
         elif int(selection) == 0:
-            stakerlib.sendmany64_TUI(chain)
+            stakerlib.sendmany64_TUI(chain, rpc_connection)
         elif int(selection) == 1:
-            stakerlib.RNDsendmany_TUI(chain)
+            stakerlib.RNDsendmany_TUI(chain, rpc_connection)
         elif int(selection) == 2:
-            stakerlib.genaddresses(chain)
+            stakerlib.genaddresses(chain, rpc_connection)
         elif int(selection) == 3:
-            stakerlib.import_list(chain)
+            stakerlib.import_list(chain, rpc_connection)
         elif int(selection) == 4:
-            print('with not implemented')
-        elif int(selection) == 5:
-            print('stats not implemented yet')
+            stakerlib.withdraw_TUI(chain, rpc_connection)
         else:
             print('BUG!')
 
-chain_menu = ['sendmany64','RNDsendmany', 'genaddresses', 'importlist', 'withdraw', 'stats']
+chain_menu = ['sendmany64','RNDsendmany', 'genaddresses', 'importlist', 'withdraw']
 select_loop()
 
 

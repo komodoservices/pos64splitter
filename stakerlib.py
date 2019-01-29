@@ -3,6 +3,9 @@ import os
 import re
 import json
 import random
+import base58
+import binascii
+import hashlib
 from slickrpc import Proxy
 
 
@@ -55,6 +58,23 @@ def genvaldump(rpc_connection):
     output = [segid, pubkey, privkey, address]
     return (output)
 
+
+# function to convert any address to different prefix 
+# also useful for validating an address, use '3c' for prefix for validation
+def addr_convert(prefix, address):
+    rmd160_dict = {}
+    ripemd = base58.b58decode_check(address).hex()[2:]
+    net_byte = prefix + ripemd
+    bina = binascii.unhexlify(net_byte)
+    sha256a = hashlib.sha256(bina).hexdigest()
+    binb = binascii.unhexlify(sha256a)
+    sha256b = hashlib.sha256(binb).hexdigest()
+    hmmmm = binascii.unhexlify(net_byte + sha256b[:8])
+    final = base58.b58encode(hmmmm)
+    return(final.decode())
+
+
+# FIXME don't sys.exit from TUI
 # function to unlock ALL lockunspent UTXOs
 def unlockunspent(rpc_connection):
     try:
@@ -70,21 +90,7 @@ def unlockunspent(rpc_connection):
         sys.exit(e)
     return(lockunspent_result)
 
-# function to unlock ALL lockunspent UTXOs
-def unlockunspent():
-    try:
-        listlockunspent_result = rpc_connection.listlockunspent()
-    except Exception as e:
-        sys.exit(e)
-    unlock_list = []
-    for i in listlockunspent_result:
-        unlock_list.append(i)
-    try:
-        lockunspent_result = rpc_connection.lockunspent(True, unlock_list)
-    except Exception as e:
-        sys.exit(e)
-    return(lockunspent_result)
-    
+
 # iterate addresses list, construct dictionary,
 # with amount as value for each address
 def sendmany64(rpc_connection, amount):
@@ -120,12 +126,7 @@ def sendmanyloop(rpc_connection, amount, utxos):
         lockunspent_result = rpc_connection.lockunspent(False, lockunspent_list)
     return(txid_list)
 
-def sendmany64_TUI(chain):
-    try:
-        rpc_connection = def_credentials(chain)
-    except Exception as e:
-        print(e)
-        return(0)
+def sendmany64_TUI(chain, rpc_connection):
     balance = float(rpc_connection.getbalance())
     print('Balance: ' + str(balance))
 
@@ -170,12 +171,7 @@ def RNDsendmanyloop(rpc_connection, amounts):
         lockunspent_result = rpc_connection.lockunspent(False, lockunspent_list)
     return(txid_list)
 
-def RNDsendmany_TUI(chain):
-    try:
-        rpc_connection = def_credentials(chain)
-    except Exception as e:
-        print(e)
-        return(0)
+def RNDsendmany_TUI(chain, rpc_connection):
 
     try:
         balance = float(rpc_connection.getbalance())
@@ -230,18 +226,11 @@ def RNDsendmany_TUI(chain):
         print(i)
     print('Success!')
 
-def genaddresses(chain):
+def genaddresses(chain, rpc_connection):
     if os.path.isfile("list.json"):
         print('Already have list.json, move it if you would like to '
               'generate another set.You can use importlist.py script to import'
               ' the already existing list.py to a given chain.')
-        return(0)
-
-    # create rpc_connection
-    try:
-        rpc_connection = def_credentials(chain)
-    except Exception as e:
-        print(e)
         return(0)
     
     # fill a list of sigids with matching segid address data
@@ -265,14 +254,12 @@ def genaddresses(chain):
     f = open("list.json", "w+")
     f.write(json.dumps(segids_array))
 
-
-# import list.json to chain
-def import_list(chain):
+# FIXME make this rescan only on 64th import
+# import list.json to chain 
+def import_list(chain, rpc_connection):
     if not os.path.isfile("list.json"):
         print('No list.json file present. Use genaddresses.py script to generate one.')
         return(0)
-
-    rpc_connection = def_credentials(chain)
 
     with open('list.json') as key_list:
         json_data = json.load(key_list)
@@ -280,3 +267,123 @@ def import_list(chain):
             print(i[3])
             rpc_connection.importprivkey(i[2])
     print('Success!')
+    
+def extract_segid(_segid,unspents):
+    ret = []
+    for unspent in unspents:
+        if unspent['segid'] == _segid:
+            unspent['amount'] = float(unspent['amount'])
+            ret.append(unspent)
+    return(ret)
+
+def withdraw_TUI(chain, rpc_connection):
+
+    def unlockunspent2():
+        try:
+            listlockunspent_result = rpc_connection.listlockunspent()
+        except Exception as e:
+            print(e)
+            withdraw_TUI(chain, rpc_connection)
+        unlock_list = []
+        for i in listlockunspent_result:
+            unlock_list.append(i)
+        try:
+            lockunspent_result = rpc_connection.lockunspent(True, unlock_list)
+        except Exception as e:
+            print(e)
+            withdraw_TUI(chain, rpc_connection)
+        return(lockunspent_result)
+
+    balance = float(rpc_connection.getbalance())
+    print('Balance: ' + str(balance))
+
+    address = input('Please specify address to withdraw to: ')
+    try:
+        address_check = addr_convert('3c', address)
+    except Exception as e:
+        print('invalid address:', str(e) + '\n')
+        
+        withdraw_TUI(chain, rpc_connection)
+
+    if address_check != address:
+        print('Wrong address format, must use an R address')
+        withdraw_TUI(chain, rpc_connection)
+    
+    user_input = input("Please specify the percentage of balance to lock: ")
+    try:
+        PERC = int(user_input)
+    except:
+        print('Error: must be whole number')
+        withdraw_TUI(chain, rpc_connection)
+    
+    if PERC < 1:
+        print('Error: Cant lock 0%.')
+        withdraw_TUI(chain, rpc_connection)
+
+    # get listunspent
+    try:        
+        listunspent_result = rpc_connection.listunspent()
+    except Exception as e:
+        print(e)
+        return(0)
+
+    # sort into utxos per segid.
+    segids = []
+
+    for i in range(0,63):
+        segid = extract_segid(i, listunspent_result)
+        segids.append(segid)
+
+    lockunspent_list = []
+    # Sort it by value and confirms. We want to keep large and old utxos. So largest and oldest at top.
+    # When the wallet has small number of utxo per segid ( < 10 )the percentage should be static 50, other % give unexpected results.
+    for segid in segids:
+        # likley some improvment here age vs. size ? 
+        # there should maybe be a utxo score, that includes age and size and locks utxos with highest score.
+        segid = sorted(segid, key=lambda x : (-x['amount'], -x['confirmations']))
+        numutxo = int(len(segid) * (PERC/100))
+        i = 0
+        for unspent in segid:
+            output_dict = {
+                "txid": unspent['txid'],
+                "vout": unspent['vout']
+                }
+            lockunspent_list.append(output_dict)
+            i = i + 1
+            if i >= numutxo:
+                break
+
+    # Lock % defined of each segids utxos.
+    lockunspent_result = rpc_connection.lockunspent(False, lockunspent_list)
+
+    # get listunspent
+    try:        
+        listunspent_result = rpc_connection.listunspent()
+    except Exception as e:
+        print(e)
+        return(0)
+    totalbalance = 0
+    for unspent in listunspent_result:
+        totalbalance = float(totalbalance) + float(unspent['amount'])
+        
+    print('Balance avalibe to send: ' + str(totalbalance))
+        
+    amount = float(input('Amount? '))
+    if amount < 0 or amount > totalbalance:
+        unlockunspent2()
+        print('Too poor!')
+        return(0)
+        
+    print('Sending ' + str(amount) + ' to ' + address)
+    ret = input('Are you happy with these? ').lower()
+    if ret.startswith('n'):
+        unlockunspent2()
+        print('You are not happy?')
+        return(0)
+
+    # send coins.
+    txid_result = rpc_connection.sendtoaddress(address, amount)
+
+    # unlock all locked utxos
+    unlockunspent2()
+    print('Success: ' + txid_result)
