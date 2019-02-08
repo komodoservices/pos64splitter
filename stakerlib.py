@@ -421,10 +421,11 @@ def startchain(chain, rpc_connection):
         sendtoaddress_result = rpc_connection.sendtoaddress(address_check, amount)
         print(sendtoaddress_result)
 
-    huh = input('Existing list.json found, would you like to import it?(y/n): ').lower() # FIXME wat do if no
+    huh = input('Existing list.json found, would you like to import it?(y/n): ').lower()
     if huh.startswith('y'):
         import_list(chain, rpc_connection)
     else:
+        print('Must import a list.json')
         return(0)
 
     print('Mining blocks 1 and 2, please wait')
@@ -438,10 +439,6 @@ def startchain(chain, rpc_connection):
         if not ret.startswith('y'):
             print('Balance: ' + str(rpc_connection.getbalance()))
             sendtoaddress(chain, rpc_connection)
-            #RNDsendmany_TUI(chain, rpc_connection)
-            #rpc_connection.setgenerate(True, 0)
-            #print('Your node has now begun staking. Ensure that at least one other node is mining.')
-            #return(0)
         RNDsendmany_TUI(chain, rpc_connection)
         rpc_connection.setgenerate(True, 0)
         print('Your node has now begun staking. Ensure that at least one other node is mining.')
