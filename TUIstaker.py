@@ -115,10 +115,12 @@ def chain_loop(chain):
             stakerlib.import_list(chain, rpc_connection)
         elif int(selection) == 4:
             stakerlib.withdraw_TUI(chain, rpc_connection)
+        elif int(selection) == 5:
+            stakerlib.startchain(chain, rpc_connection)
         else:
             print('BUG!')
 
-chain_menu = ['sendmany64','RNDsendmany', 'genaddresses', 'importlist', 'withdraw']
+chain_menu = ['sendmany64','RNDsendmany', 'genaddresses', 'importlist', 'withdraw', 'Start a new chain']
 select_loop()
 
 

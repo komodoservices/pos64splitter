@@ -226,12 +226,12 @@ def RNDsendmany_TUI(chain, rpc_connection):
         print(i)
     print('Success!')
 
-def genaddresses(chain, rpc_connection):
+def genaddresses(chain, rpc_connection): # FIXME don't print in start script
     if os.path.isfile("list.json"):
         print('Already have list.json, move it if you would like to '
               'generate another set.You can use importlist.py script to import'
               ' the already existing list.py to a given chain.')
-        return(0)
+        return(1)
     
     # fill a list of sigids with matching segid address data
     segids = {}
@@ -302,7 +302,6 @@ def withdraw_TUI(chain, rpc_connection):
         address_check = addr_convert('3c', address)
     except Exception as e:
         print('invalid address:', str(e) + '\n')
-        
         withdraw_TUI(chain, rpc_connection)
 
     if address_check != address:
@@ -365,8 +364,14 @@ def withdraw_TUI(chain, rpc_connection):
     totalbalance = 0
     for unspent in listunspent_result:
         totalbalance = float(totalbalance) + float(unspent['amount'])
+
+    balance = rpc_connection.getbalance()
+    if totalbalance == balance:
+        print('Balance available to send: ' + str(totalbalance))
+    else:
+        print('Balance available to send: ' + str(totalbalance))
         
-    print('Balance avalibe to send: ' + str(totalbalance))
+    print('Balance available to send: ' + str(totalbalance))
         
     amount = float(input('Amount? '))
     if amount < 0 or amount > totalbalance:
@@ -387,3 +392,57 @@ def withdraw_TUI(chain, rpc_connection):
     # unlock all locked utxos
     unlockunspent2()
     print('Success: ' + txid_result)
+
+def startchain(chain, rpc_connection):
+    def blockcount():
+        while True:
+            getinfo_result = rpc_connection.getinfo()
+            if getinfo_result['blocks'] > 1:
+                rpc_connection.setgenerate(False)
+                return(0)
+
+    getinfo_result = rpc_connection.getinfo()
+
+    if getinfo_result['blocks'] != 0:
+        print('must be used on a new chain, exiting')
+        return(0)
+
+    def sendtoaddress(chain, rpc_connection):
+        address = input("Please specify address to withdraw coins to. It must not be owned by this node: ")
+        try:
+            address_check = addr_convert('3c', address)
+        except Exception as e:
+            print('invalid address:', str(e) + '\n')
+            sendtoaddress(chain, rpc_connection)
+        if address_check != address:
+            print('Wrong address format, must use an R address')
+            sendtoaddress(chain, rpc_connection)
+        amount = input("Please specify the amount of coins to send: ")
+        sendtoaddress_result = rpc_connection.sendtoaddress(address_check, amount)
+        print(sendtoaddress_result)
+
+    huh = input('Existing list.json found, would you like to import it?(y/n): ').lower() # FIXME wat do if no
+    if huh.startswith('y'):
+        import_list(chain, rpc_connection)
+    else:
+        return(0)
+
+    print('Mining blocks 1 and 2, please wait')
+    rpc_connection.setgenerate(True, 2)
+
+    blockcount()
+
+    balance = rpc_connection.getbalance()
+    if genaddresses(chain, rpc_connection) == 1:
+        ret = input('Would you like to stake the full premine?(y/n): ').lower()
+        if not ret.startswith('y'):
+            print('Balance: ' + str(rpc_connection.getbalance()))
+            sendtoaddress(chain, rpc_connection)
+            #RNDsendmany_TUI(chain, rpc_connection)
+            #rpc_connection.setgenerate(True, 0)
+            #print('Your node has now begun staking. Ensure that at least one other node is mining.')
+            #return(0)
+        RNDsendmany_TUI(chain, rpc_connection)
+        rpc_connection.setgenerate(True, 0)
+        print('Your node has now begun staking. Ensure that at least one other node is mining.')
+        return(0)
