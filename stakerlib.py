@@ -56,7 +56,7 @@ def genvaldump(rpc_connection):
     privkey = rpc_connection.dumpprivkey(address)
     # function output
     output = [segid, pubkey, privkey, address]
-    return (output)
+    return(output)
 
 
 # function to convert any address to different prefix 
@@ -405,6 +405,15 @@ def startchain(chain, rpc_connection):
 
     if getinfo_result['blocks'] != 0:
         print('must be used on a new chain, exiting')
+        return(0)
+
+    peers = rpc_connection.getpeerinfo()
+    if not peers:
+        print('No peers found, please connect your node to at least one other peer.')
+        return(0)
+
+    if 'eras' in getinfo_result:
+        print('This script is incompatible with ac_eras chains. Please use genaddresses then RNDsendmany after block 100 instead.')
         return(0)
 
     def sendtoaddress(chain, rpc_connection):
