@@ -43,6 +43,18 @@ def def_credentials(chain):
     return (Proxy("http://%s:%s@127.0.0.1:%d" % (rpcuser, rpcpassword, int(rpcport))))
 
 
+def user_input(display, input_type):
+    u_input = input(display)
+    if u_input == 'q':
+        print('Exiting to previous menu...\n')
+        return('exit')
+    if not isinstance(display, input_type):
+        print('input must be a ' + str(input_type) + '\n')
+        return('exit')
+    else:
+        return(u_input)
+    
+
 # generate address, validate address, dump private key
 def genvaldump(rpc_connection):
     # get new address
@@ -57,6 +69,19 @@ def genvaldump(rpc_connection):
     # function output
     output = [segid, pubkey, privkey, address]
     return(output)
+
+
+def colorize(string, color):
+    colors = {
+        'blue': '\033[94m',
+        'magenta': '\033[95m',
+        'green': '\033[92m',
+        'red': '\033[91m'
+    }
+    if color not in colors:
+        return string
+    else:
+        return colors[color] + string + '\033[0m'
 
 
 # function to convert any address to different prefix 
@@ -130,11 +155,18 @@ def sendmany64_TUI(chain, rpc_connection):
     balance = float(rpc_connection.getbalance())
     print('Balance: ' + str(balance))
 
-    AMOUNT = input("Please specify the size of UTXOs: ")
+    #AMOUNT = input("Please specify the size of UTXOs: ")
+    AMOUNT = user_input('Please specify the size of UTXOs: ', int)
+    if AMOUNT == 'exit':
+        return(0)
+    
     if float(AMOUNT) < float(1):
         print('Cant stake coin amounts less than 1 coin, try again.')
         return(0)
-    UTXOS = input("Please specify the amount of UTXOs to send to each segid: ")
+    UTXOS = user_input("Please specify the amount of UTXOs to send to each segid: ", int)
+    if UTXO == 'exit':
+        return(0)
+
     total = float(AMOUNT) * int(UTXOS) * 64
     print('Total amount: ' + str(total))
     if total > balance:
