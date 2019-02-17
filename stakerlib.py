@@ -475,6 +475,37 @@ def withdraw_TUI(chain, rpc_connection):
     unlockunspent2()
     print('Success: ' + txid_result)
 
+
+def start_daemon(chain):
+    params = get_chainparams(chain)
+    komodod_path = sys.path[0] + '/komodod'
+    param_list = [komodod_path]
+    with open('list.json', 'r') as f:
+        list_json = json.load(f)
+        mypubkey = list_json[0][1]
+    pubkey = '-pubkey=' + mypubkey
+    for i in params:
+       print(params[i])
+       if i == 'addnode':
+           for ip in params[i]:
+               param_list.append('-addnode=' + ip)
+               print('ip', ip)
+       else:
+           param_list.append('-' + i + '=' + params[i])
+    param_list.append(pubkey)
+    proc = subprocess.Popen(param_list, stdout=DEVNULL, stderr=STDOUT, preexec_fn=os.setpgrp)
+    print('Waiting for daemon to respond, please wait')
+    while True:
+        time.sleep(10)
+        try:
+            rpc_connection = def_credentials(chain)
+            rpc_connection.getinfo()
+            break
+        except Exception as e:
+            continue
+    
+    return(0)
+
 def restart_daemon(chain, rpc_connection):
     params = get_chainparams(chain)
     magic_check = rpc_connection.getinfo()['p2pport']
@@ -501,8 +532,7 @@ def restart_daemon(chain, rpc_connection):
        param_list.append('-' + i + '=' + params[i])
     param_list.append(blocknotify)
     param_list.append(pubkey)
-    #time.sleep(200)
-    proc = subprocess.Popen(param_list, stdout=DEVNULL, stderr=STDOUT)
+    proc = subprocess.Popen(param_list, stdout=DEVNULL, stderr=STDOUT, preexec_fn=os.setpgrp)
     #check_call(param_list, stdout=DEVNULL, stderr=STDOUT)
     #subprocess.run(param_list, shell=False, stdout=None, stderr=None, timeout=1)
     print('Waiting for daemon to respond, please wait')
