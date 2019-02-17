@@ -485,7 +485,6 @@ def start_daemon(chain):
         mypubkey = list_json[0][1]
     pubkey = '-pubkey=' + mypubkey
     for i in params:
-       print(params[i])
        if i == 'addnode':
            for ip in params[i]:
                param_list.append('-addnode=' + ip)

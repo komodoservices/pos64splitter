@@ -52,6 +52,7 @@ def add_chain(chain):
         new_chain = input('Add/remove chain:')
     else:
         new_chain = chain
+    print('new chain', new_chain)
     # delete and restart loop if user inputted chain exists in conf
     for i in (range(len(staker_conf))):
         if staker_conf[i][0] ==  new_chain:
@@ -61,11 +62,10 @@ def add_chain(chain):
             select_loop('')
     # add new chain to conf, stored as a list in case we want to save something, dummy value for now
     staker_conf.append([new_chain, 1])
+    print(staker_conf)
     with open('staker.conf', mode='w', encoding='utf-8') as f:
         json.dump(staker_conf, f)
     return(0)
-    
-    
 
 
 def select_loop(error):
@@ -73,14 +73,15 @@ def select_loop(error):
     initial_menu(staker_conf, error)
     chain_index = stakerlib.user_inputInt(0,len(staker_conf) + 1,"Select chain:")
     while True:
+        # Start chain from assetchains.json
         if chain_index == len(staker_conf):
-            print('erve')
             user_chain = input('Please specify chain. It must be defined in assetchains.json. ' +
                                'If assetchains.json does not exist locally, the official one ' +
                                'will be fetched from jl777\'s repo.\nChain: ')
             stakerlib.start_daemon(user_chain)
-            add_chain = user_chain
+            add_chain(user_chain)
             chain_loop(user_chain)
+        # add/remove chain
         elif chain_index == len(staker_conf) + 1:
             add_chain(0)
             staker_conf = load_conf()
