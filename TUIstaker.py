@@ -33,9 +33,12 @@ def initial_menu(staker_conf, error):
     print('q | Exit TUI')
     print(stakerlib.colorize('===============\n', 'blue'))
 
-def print_menu(menu_list, chain, error):
-    print(stakerlib.colorize(error, 'red'))
-    print(stakerlib.colorize('\n' + chain, 'green'))
+def print_menu(menu_list, chain, msg):
+    if msg[:5] == 'Error':
+        print(stakerlib.colorize(msg, 'red'))
+    else:
+        print(stakerlib.colorize(msg, 'green'))
+    print(stakerlib.colorize('\n' + chain, 'magenta'))
     print(stakerlib.colorize('===============', 'blue'))
     print('0 | <return to previous menu>\n')
     menu_item = 1
@@ -52,7 +55,6 @@ def add_chain(chain):
         new_chain = input('Add/remove chain:')
     else:
         new_chain = chain
-    print('new chain', new_chain)
     # delete and restart loop if user inputted chain exists in conf
     for i in (range(len(staker_conf))):
         if staker_conf[i][0] ==  new_chain:
@@ -62,7 +64,6 @@ def add_chain(chain):
             select_loop('')
     # add new chain to conf, stored as a list in case we want to save something, dummy value for now
     staker_conf.append([new_chain, 1])
-    print(staker_conf)
     with open('staker.conf', mode='w', encoding='utf-8') as f:
         json.dump(staker_conf, f)
     return(0)
@@ -80,7 +81,7 @@ def select_loop(error):
                                'will be fetched from jl777\'s repo.\nChain: ')
             stakerlib.start_daemon(user_chain)
             add_chain(user_chain)
-            chain_loop(user_chain)
+            chain_loop(user_chain, '')
         # add/remove chain
         elif chain_index == len(staker_conf) + 1:
             add_chain(0)
@@ -89,11 +90,11 @@ def select_loop(error):
             chain_index = stakerlib.user_inputInt(0,len(staker_conf) + 1,"Select chain:")
         else:
             chain = staker_conf[chain_index][0]
-            chain_loop(chain)
+            chain_loop(chain, '')
 
 # Chain menu, to add additional options, add what will be displayed to chain_menu
 # and an elif for it's position in the list
-def chain_loop(chain):
+def chain_loop(chain, msg):
     os.system('clear')
     try:    
         rpc_connection = stakerlib.def_credentials(chain)
@@ -104,25 +105,32 @@ def chain_loop(chain):
         select_loop(error)
     while True:
         os.system('clear')
-        print_menu(chain_menu, chain, '')
+        print_menu(chain_menu, chain, msg)
         selection = stakerlib.user_inputInt(0,len(chain_menu),"make a selection:")
         if int(selection) == 0:
             os.system('clear')
             select_loop('')
         elif int(selection) == 1:
-            stakerlib.sendmany64_TUI(chain, rpc_connection)
+            msg = stakerlib.sendmany64_TUI(chain, rpc_connection)
+            chain_loop(chain, msg)
         elif int(selection) == 2:
-            stakerlib.RNDsendmany_TUI(chain, rpc_connection)
+            msg = stakerlib.RNDsendmany_TUI(chain, rpc_connection)
+            chain_loop(chain, msg)
         elif int(selection) == 3:
-            stakerlib.genaddresses(chain, rpc_connection)
+            msg = stakerlib.genaddresses(chain, rpc_connection)
+            chain_loop(chain, msg)
         elif int(selection) == 4:
-            stakerlib.import_list(chain, rpc_connection)
+            msg = stakerlib.import_list(chain, rpc_connection)
+            chain_loop(chain, msg)
         elif int(selection) == 5:
-            stakerlib.withdraw_TUI(chain, rpc_connection)
+            msg = stakerlib.withdraw_TUI(chain, rpc_connection)
+            chain_loop(chain, msg)
         elif int(selection) == 6:
-            stakerlib.createchain(chain, rpc_connection)
+            msg = stakerlib.createchain(chain, rpc_connection)
+            chain_loop(chain, msg)
         elif int(selection) == 7:
-            stakerlib.restart_daemon(chain, rpc_connection)
+            msg = stakerlib.restart_daemon(chain, rpc_connection)
+            chain_loop(chain, msg)
         else:
             print('BUG!')
 

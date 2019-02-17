@@ -207,8 +207,7 @@ def sendmany64_TUI(chain, rpc_connection):
         return(0)
     
     if float(AMOUNT) < float(1):
-        print('Cant stake coin amounts less than 1 coin, try again.')
-        return(0)
+        return('Error: Cant stake coin amounts less than 1 coin, try again.')
     UTXOS = user_input("Please specify the amount of UTXOs to send to each segid: ", int)
     if UTXOS == 'exit':
         return(0)
@@ -216,10 +215,9 @@ def sendmany64_TUI(chain, rpc_connection):
     total = float(AMOUNT) * int(UTXOS) * 64
     print('Total amount: ' + str(total))
     if total > balance:
-        print('Total sending is ' + str(total-balance) + ' more than your balance. Try again.')
         segidTotal = balance / 64
-        print('Total avalible per segid is: ' + str(segidTotal))
-        return(0)
+        return('Error: Total sending is ' + str(total-balance) + ' more than your balance. Try again.' + 
+              '\nTotal avalible per segid is: ' + str(segidTotal))
 
     sendmanyloop_result = sendmanyloop(rpc_connection, AMOUNT, UTXOS)
     # unlock all locked utxos
@@ -254,8 +252,7 @@ def RNDsendmany_TUI(chain, rpc_connection):
     try:
         balance = float(rpc_connection.getbalance())
     except Exception as e:
-        print(e)
-        return(0)
+        return('Error: ' + str(e))
 
     print('Balance: ' + str(balance))
 
@@ -340,8 +337,7 @@ def genaddresses(chain, rpc_connection): # FIXME don't print in start script
 # import list.json to chain 
 def import_list(chain, rpc_connection):
     if not os.path.isfile("list.json"):
-        print('No list.json file present. Use genaddresses.py script to generate one.')
-        return(0)
+        return('Error: No list.json file present. Use genaddresses.py script to generate one.')
 
     with open('list.json') as key_list:
         json_data = json.load(key_list)
@@ -405,8 +401,7 @@ def withdraw_TUI(chain, rpc_connection):
     try:        
         listunspent_result = rpc_connection.listunspent()
     except Exception as e:
-        print(e)
-        return(0)
+        return('Error: ' + str(e))
 
     # sort into utxos per segid.
     segids = []
@@ -441,8 +436,7 @@ def withdraw_TUI(chain, rpc_connection):
     try:        
         listunspent_result = rpc_connection.listunspent()
     except Exception as e:
-        print(e)
-        return(0)
+        return('Error: ' + str(e))
     totalbalance = 0
     for unspent in listunspent_result:
         totalbalance = float(totalbalance) + float(unspent['amount'])
@@ -458,8 +452,7 @@ def withdraw_TUI(chain, rpc_connection):
     amount = float(input('Amount? '))
     if amount < 0 or amount > totalbalance:
         unlockunspent2()
-        print('Too poor!')
-        return(0)
+        return('Error: Too poor!')
         
     print('Sending ' + str(amount) + ' to ' + address)
     ret = input('Are you happy with these? ').lower()
@@ -473,7 +466,7 @@ def withdraw_TUI(chain, rpc_connection):
 
     # unlock all locked utxos
     unlockunspent2()
-    print('Success: ' + txid_result)
+    return('Success: ' + txid_result)
 
 
 def start_daemon(chain):
@@ -502,7 +495,6 @@ def start_daemon(chain):
             break
         except Exception as e:
             continue
-    
     return(0)
 
 def restart_daemon(chain, rpc_connection):
@@ -524,8 +516,6 @@ def restart_daemon(chain, rpc_connection):
     komodod_path = sys.path[0] + '/komodod'
     blocknotify = '-blocknotify=' + sys.path[0] + '/staker.py %s ' + chain
     pubkey = '-pubkey=' + mypubkey
-    print(komodod_path)
-    print(blocknotify)
     param_list = [komodod_path]
     for i in params:
        param_list.append('-' + i + '=' + params[i])
@@ -537,7 +527,6 @@ def restart_daemon(chain, rpc_connection):
     print('Waiting for daemon to respond, please wait')
     while True:
         time.sleep(10)
-        print('1')
         try:
             rpc_connection = def_credentials(chain)
             rpc_connection.getinfo()
@@ -546,9 +535,8 @@ def restart_daemon(chain, rpc_connection):
             continue
     magic = magic_check = rpc_connection.getinfo()['p2pport']
     if magic != magic_check:
-        print('Daemon started with different p2p port. Please verify that the parameters in assetchains.json are correct')
-    print(param_list)
-    return(0)
+        return('Error: Daemon started with different p2p port. Please verify that the parameters in assetchains.json are correct')
+    return('Daemon restarted succesfully!')
 
     
 
@@ -582,17 +570,14 @@ def createchain(chain, rpc_connection):
     getinfo_result = rpc_connection.getinfo()
 
     if getinfo_result['blocks'] != 0:
-        print('must be used on a new chain, exiting')
-        return(0)
+        return('Error: must be used on a new chain')
 
     peers = rpc_connection.getpeerinfo()
     if not peers:
-        print('No peers found, please connect your node to at least one other peer.')
-        return(0)
+        return('Error: No peers found, please connect your node to at least one other peer.')
 
     if 'eras' in getinfo_result:
-        print('This script is incompatible with ac_eras chains. Please use genaddresses then RNDsendmany after block 100 instead.')
-        return(0)
+        return('Error: This script is incompatible with ac_eras chains. Please use genaddresses then RNDsendmany after block 100 instead.')
 
     def sendtoaddress(chain, rpc_connection):
         address = input("Please specify address to withdraw coins to. It must not be owned by this node: ")
@@ -613,8 +598,7 @@ def createchain(chain, rpc_connection):
         if huh.startswith('y'):
             import_list(chain, rpc_connection)
         else:
-            print('must import a list.json to begin.')
-            return(0)
+            return('Error: must import a list.json to begin.')
 
     else:
         print('Generating list.json, please wait...')
@@ -636,5 +620,5 @@ def createchain(chain, rpc_connection):
     RNDsendmany_TUI(chain, rpc_connection)
     restart_daemon(chain, rpc_connection)
     rpc_connection.setgenerate(True, 0)
-    print('Your node has now begun staking. Ensure that at least one other node is mining.')
-    return(0)
+    return('Your node has now begun staking. Ensure that at least one other node is mining.')
+
