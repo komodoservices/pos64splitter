@@ -3,6 +3,9 @@ import sys
 import random
 import json
 import stakerlib
+import logging
+
+logging.basicConfig(filename='example.log',level=logging.DEBUG)
 
 BESTBLOCKHASH =  sys.argv[1]
 CHAIN = sys.argv[2]
@@ -33,21 +36,21 @@ def staked_from_address(chain, getblock_ret):
 try:    
     rpc_connection = stakerlib.def_credentials(CHAIN)
 except:
-    print('Could not get connection to daemon. Exiting')
+    logging.debug('Could not get connection to daemon. Exiting')
     sys.exit(0)
 
 try:
     with open('list.json') as list:
         segid_addresses = json.load(list)
 except:
-    print('Could not load list.json please make sure it is in the directory where komodod is located. Exiting')
+    logging.debug('Could not load list.json please make sure it is in the directory where komodod is located. Exiting')
     sys.exit(0)
 
 # Get pubkey being mined to.
 try:
     pubkey = rpc_connection.getinfo()['pubkey']
 except:
-    print('PubKey not set. Exiting')
+    logging.debug('PubKey not set. Exiting')
     sys.exit(0)
 
 # Get the address of this pubkey.
@@ -55,7 +58,7 @@ try:
     setpubkey_result = rpc_connection.setpubkey(pubkey)
     address = setpubkey_result['address']
 except:
-    print('Could not get address. Exiting')
+    logging.debug('Could not get address. Exiting')
     sys.exit(0)
     
 # Get the block and all transactions in it and save for later use.
@@ -63,17 +66,17 @@ try:
     getblock_result = rpc_connection.getblock(BESTBLOCKHASH, 2)
     coinbase_address = getblock_result['tx'][0]['vout'][0]['scriptPubKey']['addresses'][0]
 except:
-    print('Could not get block. Exiting')
+    logging.debug('Could not get block. Exiting')
     sys.exit(0)
 
 # If the address of our pubkey matches the coinbase address we mined this block.
 if coinbase_address == address:
     segid = getblock_result['segid']
     if segid == -2:
-        print('SegId not set in block, this should not happen. Exiting.')
+        logging.debug('SegId not set in block, this should not happen. Exiting.')
         sys.exit(0)
 else:
-    print('Not our block, exit.')
+    logging.debug('Not our block, exit.')
     sys.exit(0)
     
 txid_list = []
@@ -136,7 +139,7 @@ else:
             tx_value += getrawtx_result['vout'][0]['valueSat']
             staked_from = staked_from_address(CHAIN, getblock_result)
         else:
-            print('The address is not imported. Please check you imported list.json. Exiting.')
+            logging.debug('The address is not imported. Please check you imported list.json. Exiting.')
             sys.exit(0)
     for txid in txid_list:
         input_dict = {
@@ -169,6 +172,6 @@ except Exception as e:
 sendrawtxid = sendrawtx_result
 
 if segid != -1:
-    print('Staked from segid ' + str(segid) + ' ' + sendrawtxid)
+    logging.debug('Staked from segid ' + str(segid) + ' ' + sendrawtxid)
 else:
-    print('Mined block combined to ' + str(segid_to_use) + ' ' + sendrawtxid)
+    logging.debug('Mined block combined to ' + str(segid_to_use) + ' ' + sendrawtxid)

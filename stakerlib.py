@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import platform
 import os
 import re
@@ -6,6 +8,11 @@ import random
 import base58
 import binascii
 import hashlib
+import sys
+import os.path
+import subprocess
+import urllib.request
+import time
 from slickrpc import Proxy
 
 
@@ -43,14 +50,53 @@ def def_credentials(chain):
     return (Proxy("http://%s:%s@127.0.0.1:%d" % (rpcuser, rpcpassword, int(rpcport))))
 
 
+def user_inputInt(low,high, msg):
+    while True:
+        user_input = input(msg)
+        if user_input == ('q' or 'quit'):
+            print('Exiting...')
+            sys.exit(0)
+        try:
+            number = int(user_input)
+        except ValueError:
+            print("integer only, try again")
+            continue
+        if low <= number <= high:
+            return number
+        else:
+            print("input outside range, try again")
+
+def selectRangeFloat(low,high, msg):
+    while True:
+        try:
+            number = float(user_input)
+        except ValueError:
+            print("integer only, try again")
+            continue
+        if low <= number <= high:
+            return number
+        else:
+            print("input outside range, try again")
+
 def user_input(display, input_type):
     u_input = input(display)
     if u_input == 'q':
         print('Exiting to previous menu...\n')
         return('exit')
-    if not isinstance(display, input_type):
-        print('input must be a ' + str(input_type) + '\n')
-        return('exit')
+
+    if input_type == float:
+        try:
+            return(float(u_input))
+        except Exception as e:
+            print(e)
+            return('exit')
+
+    if input_type == int:
+        try:
+            return(int(u_input))
+        except Exception as e:
+            print(e)
+            return('exit')
     else:
         return(u_input)
     
@@ -155,8 +201,7 @@ def sendmany64_TUI(chain, rpc_connection):
     balance = float(rpc_connection.getbalance())
     print('Balance: ' + str(balance))
 
-    #AMOUNT = input("Please specify the size of UTXOs: ")
-    AMOUNT = user_input('Please specify the size of UTXOs: ', int)
+    AMOUNT = user_input('Please specify the size of UTXOs: ', float)
     if AMOUNT == 'exit':
         return(0)
     
@@ -164,7 +209,7 @@ def sendmany64_TUI(chain, rpc_connection):
         print('Cant stake coin amounts less than 1 coin, try again.')
         return(0)
     UTXOS = user_input("Please specify the amount of UTXOs to send to each segid: ", int)
-    if UTXO == 'exit':
+    if UTXOS == 'exit':
         return(0)
 
     total = float(AMOUNT) * int(UTXOS) * 64
@@ -214,7 +259,9 @@ def RNDsendmany_TUI(chain, rpc_connection):
     print('Balance: ' + str(balance))
 
     while True:
-        UTXOS = int(input("Please specify the amount of UTXOs to send to each segid: "))
+        UTXOS = user_input("Please specify the amount of UTXOs to send to each segid: ", int)
+        if UTXOS == 'exit':
+            return(0)
         if UTXOS < 3:
             print('Must have more than 3 utxos per segid, try again.')
             continue
@@ -222,7 +269,9 @@ def RNDsendmany_TUI(chain, rpc_connection):
         print('Total number of UTXOs: ' + str(TUTXOS))
         average = float(balance) / int(TUTXOS)
         print('Average utxo size: ' + str(average))
-        variance = float(input('Enter percentage of variance: '))
+        variance = user_input('Enter percentage of variance: ', float)
+        if variance == 'exit':
+            return(0)
         minsize = round(float(average) * (1-(variance/100)),2)
         if minsize < 1:
             print('Cant stake coin amounts less than 1 coin, try again.')
@@ -230,7 +279,7 @@ def RNDsendmany_TUI(chain, rpc_connection):
         maxsize = round(average + float(average) * (variance/100),2)
         print('Min size: ' + str(minsize))
         print('Max size: ' + str(maxsize))
-        ret = input('Are you happy with these? ').lower()
+        ret = input('Are you happy with these?(y/n): ').lower()
         if ret.startswith('y'):
             break
 
@@ -425,6 +474,73 @@ def withdraw_TUI(chain, rpc_connection):
     unlockunspent2()
     print('Success: ' + txid_result)
 
+def restart_daemon(chain, rpc_connection):
+    params = get_chainparams(chain, rpc_connection)
+    magic_check = rpc_connection.getinfo()['p2pport']
+    with open('list.json', 'r') as f:
+        list_json = json.load(f)
+        mypubkey = list_json[0][1]
+    print(magic_check)
+    rpc_connection.stop()
+    print('Waiting for daemon to stop, please wait')
+    while True:
+        try:
+            rpc_connection.getinfo()
+            continue
+        except Exception as e:
+            break
+    
+    komodod_path = sys.path[0] + '/komodod'
+    blocknotify = '-blocknotify=' + sys.path[0] + '/staker.py %s ' + chain
+    pubkey = '-pubkey=' + mypubkey
+    print(komodod_path)
+    print(blocknotify)
+    param_list = [komodod_path]
+    for i in params:
+       param_list.append('-' + i + '=' + params[i])
+    param_list.append(blocknotify)
+    param_list.append(pubkey)
+    #param_list.append('> /dev/null')
+    #time.sleep(200)
+    proc = subprocess.Popen(param_list)
+    #subprocess.run(param_list, shell=False, stdout=None, stderr=None, timeout=1)
+    print('Waiting for daemon to respond, please wait')
+    while True:
+        time.sleep(10)
+        print('1')
+        try:
+            rpc_connection = def_credentials(chain)
+            rpc_connection.getinfo()
+            break
+        except Exception as e:
+            continue
+    magic = magic_check = rpc_connection.getinfo()['p2pport']
+    if magic != magic_check:
+        print('Daemon started with different p2p port. Please verify that the parameters in assetchains.json are correct')
+    print(param_list)
+    return(0)
+
+    
+
+def get_chainparams(chain, rpc_connection):
+    operating_system = platform.system()
+    if operating_system == 'Linux':
+        if os.path.isfile("komodod"):
+            if not os.path.isfile("assetchains.json"):
+                print("No assetchains.json found. Downloading latest from jl777\'s beta branch")
+                urllib.request.urlretrieve("https://raw.githubusercontent.com/jl777/komodo/beta/src/assetchains.json", "assetchains.json")
+            with open('assetchains.json', 'r') as f:
+                asset_json = json.load(f)
+                for i in asset_json:
+                    #print(i['ac_name'])
+                    if i['ac_name'] == chain:
+                        params = i
+                        return(params)
+        else:
+            print('Please copy/move komodod to the same directory as TUIstaker.py')
+    else:
+        print('Linux is the only supported OS right now. Please restart daemon manually')
+
 def startchain(chain, rpc_connection):
     def blockcount():
         while True:
@@ -462,12 +578,19 @@ def startchain(chain, rpc_connection):
         sendtoaddress_result = rpc_connection.sendtoaddress(address_check, amount)
         print(sendtoaddress_result)
 
-    huh = input('Existing list.json found, would you like to import it?(y/n): ').lower()
-    if huh.startswith('y'):
-        import_list(chain, rpc_connection)
+    if os.path.isfile("list.json"):
+        huh = input('Existing list.json found, would you like to import it?(y/n): ').lower()
+        if huh.startswith('y'):
+            import_list(chain, rpc_connection)
+        else:
+            print('must import a list.json to begin.')
+            return(0)
+
     else:
-        print('Must import a list.json')
-        return(0)
+        print('Generating list.json, please wait...')
+        genaddresses(chain, rpc_connection)
+
+
 
     print('Mining blocks 1 and 2, please wait')
     rpc_connection.setgenerate(True, 2)
@@ -475,12 +598,12 @@ def startchain(chain, rpc_connection):
     blockcount()
 
     balance = rpc_connection.getbalance()
-    if genaddresses(chain, rpc_connection) == 1:
-        ret = input('Would you like to stake the full premine?(y/n): ').lower()
-        if not ret.startswith('y'):
-            print('Balance: ' + str(rpc_connection.getbalance()))
-            sendtoaddress(chain, rpc_connection)
-        RNDsendmany_TUI(chain, rpc_connection)
-        rpc_connection.setgenerate(True, 0)
-        print('Your node has now begun staking. Ensure that at least one other node is mining.')
-        return(0)
+    #if genaddresses(chain, rpc_connection) == 1:
+    ret = input('Would you like to stake the full premine?(y/n): ').lower()
+    if not ret.startswith('y'):
+        print('Balance: ' + str(rpc_connection.getbalance()))
+        sendtoaddress(chain, rpc_connection)
+    RNDsendmany_TUI(chain, rpc_connection)
+    rpc_connection.setgenerate(True, 0)
+    print('Your node has now begun staking. Ensure that at least one other node is mining.')
+    return(0)
