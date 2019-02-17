@@ -11,6 +11,7 @@ import hashlib
 import sys
 import os.path
 import subprocess
+from subprocess import DEVNULL, STDOUT, check_call
 import urllib.request
 import time
 from slickrpc import Proxy
@@ -475,7 +476,7 @@ def withdraw_TUI(chain, rpc_connection):
     print('Success: ' + txid_result)
 
 def restart_daemon(chain, rpc_connection):
-    params = get_chainparams(chain, rpc_connection)
+    params = get_chainparams(chain)
     magic_check = rpc_connection.getinfo()['p2pport']
     with open('list.json', 'r') as f:
         list_json = json.load(f)
@@ -500,9 +501,9 @@ def restart_daemon(chain, rpc_connection):
        param_list.append('-' + i + '=' + params[i])
     param_list.append(blocknotify)
     param_list.append(pubkey)
-    #param_list.append('> /dev/null')
     #time.sleep(200)
-    proc = subprocess.Popen(param_list)
+    proc = subprocess.Popen(param_list, stdout=DEVNULL, stderr=STDOUT)
+    #check_call(param_list, stdout=DEVNULL, stderr=STDOUT)
     #subprocess.run(param_list, shell=False, stdout=None, stderr=None, timeout=1)
     print('Waiting for daemon to respond, please wait')
     while True:
@@ -522,7 +523,7 @@ def restart_daemon(chain, rpc_connection):
 
     
 
-def get_chainparams(chain, rpc_connection):
+def get_chainparams(chain):
     operating_system = platform.system()
     if operating_system == 'Linux':
         if os.path.isfile("komodod"):
@@ -541,7 +542,7 @@ def get_chainparams(chain, rpc_connection):
     else:
         print('Linux is the only supported OS right now. Please restart daemon manually')
 
-def startchain(chain, rpc_connection):
+def createchain(chain, rpc_connection):
     def blockcount():
         while True:
             getinfo_result = rpc_connection.getinfo()
@@ -604,6 +605,7 @@ def startchain(chain, rpc_connection):
         print('Balance: ' + str(rpc_connection.getbalance()))
         sendtoaddress(chain, rpc_connection)
     RNDsendmany_TUI(chain, rpc_connection)
+    restart_daemon(chain, rpc_connection)
     rpc_connection.setgenerate(True, 0)
     print('Your node has now begun staking. Ensure that at least one other node is mining.')
     return(0)
