@@ -14,7 +14,8 @@ def load_conf():
         print(e)
         staker_conf = []
         user_input = input('No staker.conf conf file, specify a chain to begin:')
-        msg = stakerlib.start_daemon(user_input)
+        # FIXME
+        msg = stakerlib.start_daemon(user_input, 1)
         staker_conf.append([user_input])
         with open('staker.conf', "a+") as f:
             json.dump(staker_conf, f)
@@ -81,7 +82,7 @@ def select_loop(error):
             user_chain = input('Please specify chain. It must be defined in assetchains.json. ' +
                                'If assetchains.json does not exist locally, the official one ' +
                                'will be fetched from jl777\'s repo.\nChain: ')
-            start_daemon_result = stakerlib.start_daemon(user_chain)
+            start_daemon_result = stakerlib.start_daemon(user_chain, '')
             if isinstance(start_daemon_result, str):
                 select_loop(start_daemon_result)
             add_chain(user_chain)

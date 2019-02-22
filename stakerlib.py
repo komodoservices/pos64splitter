@@ -468,17 +468,18 @@ def withdraw_TUI(chain, rpc_connection):
     return('Success: ' + txid_result)
 
 
-def start_daemon(chain):
+def start_daemon(chain, no_pk):
     params = get_chainparams(chain)
     if params == 0:
         return('Error: ' + chain + ' not found in assetchains.json')# FIXME
-    print(params)
     komodod_path = sys.path[0] + '/komodod'
     param_list = [komodod_path]
-    with open(chain + ".json", 'r') as f:
-        list_json = json.load(f)
-        mypubkey = list_json[0][1]
-    pubkey = '-pubkey=' + mypubkey
+    if no_pk != 1:
+        with open(chain + ".json", 'r') as f:
+            list_json = json.load(f)
+            mypubkey = list_json[0][1]
+        pubkey = '-pubkey=' + mypubkey
+        param_list.append(pubkey)
     for i in params:
        if i == 'addnode':
            for ip in params[i]:
