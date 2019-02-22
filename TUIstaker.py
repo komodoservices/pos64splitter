@@ -85,7 +85,7 @@ def select_loop(error):
             user_chain = input('Please specify chain. It must be defined in assetchains.json. ' +
                                'If assetchains.json does not exist locally, the official one ' +
                                'will be fetched from jl777\'s repo.\nChain: ')
-            start_daemon_result = stakerlib.start_daemon(user_chain, '')
+            start_daemon_result = stakerlib.start_daemon(user_chain, 1)
             if isinstance(start_daemon_result, str):
                 select_loop(start_daemon_result)
             names = []
@@ -145,10 +145,41 @@ def chain_loop(chain, msg):
             params = stakerlib.get_chainparams(chain)
             msg = stakerlib.restart_daemon(chain, params, rpc_connection)
             chain_loop(chain, msg)
+        elif int(selection) == 8:
+            stats_loop(chain, '')
         else:
             print('BUG!')
 
-chain_menu = ['sendmany64','RNDsendmany', 'genaddresses', 'importlist', 'withdraw', 'Start a new chain', 'Restart daemon with -blocknotify']
+def stats_loop(chain, msg):
+    os.system('clear')
+    try:    
+        rpc_connection = stakerlib.def_credentials(chain)
+        dummy = rpc_connection.getbalance() # test connection
+    except Exception as e:
+        os.system('clear')
+        print(e)
+        error = 'Error: Could not connect to daemon. ' + chain + ' is not running or rpc creds not found.'
+        select_loop(error)
+    while True:
+        os.system('clear')
+        print_menu(stats_menu, chain, msg)
+        selection = stakerlib.user_inputInt(0,len(stats_menu),"make a selection:")
+        if int(selection) == 0:
+            os.system('clear')
+            chain_loop(chain, '')
+        elif int(selection) == 1:
+            msg = rpc_connection.getbalance()
+            stats_loop(chain, str(msg))
+        elif int(selection) == 2:
+            msg = stakerlib.RNDsendmany_TUI(chain, rpc_connection)
+            chain_loop(chain, msg)
+        elif int(selection) == 8:
+            stats_loop(chain, '')
+        else:
+            print('BUG!')
+
+chain_menu = ['sendmany64','RNDsendmany', 'genaddresses', 'importlist', 'withdraw', 'Start a new chain', 'Restart daemon with -blocknotify', 'stats']
+stats_menu = ['balance', 'UTXO count']
 os.system('clear')
 select_loop('')
 
