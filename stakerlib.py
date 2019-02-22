@@ -307,10 +307,9 @@ def RNDsendmany_TUI(chain, rpc_connection):
 
 def genaddresses(chain, rpc_connection): # FIXME don't print in start script
     if os.path.isfile("list.json"):
-        print('Already have list.json, move it if you would like to '
+        return('Error: Already have list.json, move it if you would like to '
               'generate another set.You can use importlist.py script to import'
               ' the already existing list.py to a given chain.')
-        return(1)
     
     # fill a list of sigids with matching segid address data
     segids = {}
@@ -328,10 +327,10 @@ def genaddresses(chain, rpc_connection): # FIXME don't print in start script
         segids_array.append(segids[position])
 
     # save output to list.py
-    print('Success! list.json created. '
-          'THIS FILE CONTAINS PRIVATE KEYS. KEEP IT SAFE.')
     f = open("list.json", "w+")
     f.write(json.dumps(segids_array))
+    return('Success! list.json created. '
+          'THIS FILE CONTAINS PRIVATE KEYS. KEEP IT SAFE.')
 
 # FIXME make this rescan only on 64th import
 # import list.json to chain 
