@@ -531,7 +531,7 @@ def restart_daemon(chain, params, rpc_connection):
     pubkey = '-pubkey=' + mypubkey
     param_list = [komodod_path]
     for i in params:
-        if i == 'addnode':
+       if i == 'addnode':
            for ip in params[i]:
                param_list.append('-addnode=' + ip)
        else:
