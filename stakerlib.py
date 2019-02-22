@@ -500,10 +500,12 @@ def start_daemon(chain, no_pk):
 
 def restart_daemon(chain, params, rpc_connection):
     magic_check = rpc_connection.getinfo()['p2pport']
-    with open(chain + ".json", 'r') as f:
-        list_json = json.load(f)
-        mypubkey = list_json[0][1]
-    print(magic_check)
+    try:
+        with open(chain + ".json", 'r') as f:
+            list_json = json.load(f)
+            mypubkey = list_json[0][1]
+    except:
+        return('Error: ' + chain + '.json not found. Please use genaddresses to create one.')
     rpc_connection.stop()
     print('Waiting for daemon to stop, please wait')
     while True:
