@@ -42,6 +42,9 @@ def print_menu(menu_list, chain, msg):
     else:
         print(stakerlib.colorize(msg, 'green'))
     print(stakerlib.colorize('\n' + chain, 'magenta'))
+    sync = stakerlib.is_chain_synced(chain)
+    if sync != 0:
+        print(stakerlib.colorize('chain not in sync ' + str(sync), 'red'))
     print(stakerlib.colorize('===============', 'blue'))
     print('0 | <return to previous menu>\n')
     menu_item = 1
@@ -85,7 +88,11 @@ def select_loop(error):
             start_daemon_result = stakerlib.start_daemon(user_chain, '')
             if isinstance(start_daemon_result, str):
                 select_loop(start_daemon_result)
-            add_chain(user_chain)
+            names = []
+            for i in staker_conf:
+                 names.append(i[0])
+            if not user_chain in names:
+                add_chain(user_chain)
             chain_loop(user_chain, '')
         # add/remove chain
         elif chain_index == len(staker_conf) + 1:

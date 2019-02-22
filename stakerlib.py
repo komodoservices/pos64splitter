@@ -498,6 +498,17 @@ def start_daemon(chain, no_pk):
             continue
     return(0)
 
+def is_chain_synced(chain):
+    rpc_connection = def_credentials(chain)
+    getinfo_result = rpc_connection.getinfo()
+    blocks = getinfo_result['blocks']
+    longestchain = getinfo_result['longestchain']
+    if blocks == longestchain:
+        return(0)
+    else:
+        return([blocks, longestchain])
+
+
 def restart_daemon(chain, params, rpc_connection):
     magic_check = rpc_connection.getinfo()['p2pport']
     try:
@@ -505,7 +516,7 @@ def restart_daemon(chain, params, rpc_connection):
             list_json = json.load(f)
             mypubkey = list_json[0][1]
     except:
-        return('Error: ' + chain + '.json not found. Please use genaddresses to create one.')
+        return('Error: ' + chain + '.json not found. Please use genaddresses or importlist to create it.')
     rpc_connection.stop()
     print('Waiting for daemon to stop, please wait')
     while True:
