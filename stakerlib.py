@@ -471,6 +471,9 @@ def withdraw_TUI(chain, rpc_connection):
 
 def start_daemon(chain):
     params = get_chainparams(chain)
+    if params == 0:
+        return('Error: ' + chain + ' not found in assetchains.json')# FIXME
+    print(params)
     komodod_path = sys.path[0] + '/komodod'
     param_list = [komodod_path]
     with open('list.json', 'r') as f:
@@ -481,7 +484,6 @@ def start_daemon(chain):
        if i == 'addnode':
            for ip in params[i]:
                param_list.append('-addnode=' + ip)
-               print('ip', ip)
        else:
            param_list.append('-' + i + '=' + params[i])
     param_list.append(pubkey)
@@ -497,8 +499,7 @@ def start_daemon(chain):
             continue
     return(0)
 
-def restart_daemon(chain, rpc_connection):
-    params = get_chainparams(chain)
+def restart_daemon(chain, params, rpc_connection):
     magic_check = rpc_connection.getinfo()['p2pport']
     with open('list.json', 'r') as f:
         list_json = json.load(f)
@@ -533,7 +534,7 @@ def restart_daemon(chain, rpc_connection):
             break
         except Exception as e:
             continue
-    magic = magic_check = rpc_connection.getinfo()['p2pport']
+    magic = rpc_connection.getinfo()['p2pport']
     if magic != magic_check:
         return('Error: Daemon started with different p2p port. Please verify that the parameters in assetchains.json are correct')
     return('Daemon restarted succesfully!')
@@ -542,6 +543,7 @@ def restart_daemon(chain, rpc_connection):
 
 def get_chainparams(chain):
     operating_system = platform.system()
+    ac_names = []
     if operating_system == 'Linux':
         if os.path.isfile("komodod"):
             if not os.path.isfile("assetchains.json"):
@@ -549,11 +551,18 @@ def get_chainparams(chain):
                 urllib.request.urlretrieve("https://raw.githubusercontent.com/jl777/komodo/beta/src/assetchains.json", "assetchains.json")
             with open('assetchains.json', 'r') as f:
                 asset_json = json.load(f)
+                #for lol in asset_json:
+                    #ac_names.append(i['ac_name'])
+                #if chain in ac_names:
                 for i in asset_json:
-                    #print(i['ac_name'])
-                    if i['ac_name'] == chain:
-                        params = i
-                        return(params)
+                    ac_names.append(i['ac_name'])
+                
+                if chain not in ac_names:# FIXME
+                    return(0)
+                else:
+                    for i in asset_json:
+                        if i['ac_name'] == chain:
+                            return(i)
         else:
             print('Please copy/move komodod to the same directory as TUIstaker.py')
     else:
@@ -562,12 +571,29 @@ def get_chainparams(chain):
 def createchain(chain, rpc_connection):
     def blockcount():
         while True:
+            time.sleep(10)
             getinfo_result = rpc_connection.getinfo()
             if getinfo_result['blocks'] > 1:
                 rpc_connection.setgenerate(False)
                 return(0)
 
     getinfo_result = rpc_connection.getinfo()
+    print(getinfo_result['name'])
+    #if user_yn.startswith('y'):
+     #   import_list(chain, rpc_connection)
+    #else:
+     #   return('Error: must import a list.json to begin.')
+
+    params = get_chainparams(chain)# FIXME
+    if params == 0:
+        return('Error: chain not in assetchains.json')
+
+    if 'ac_script' in params:
+        return('Error: This script is incompatible with ac_script. ' +
+                'You must fund this node then use RNDsendmany instead.')
+
+    if 'ac_pubkey' in params:
+        return('Error: ' + str(params))
 
     if getinfo_result['blocks'] != 0:
         return('Error: must be used on a new chain')
@@ -578,6 +604,7 @@ def createchain(chain, rpc_connection):
 
     if 'eras' in getinfo_result:
         return('Error: This script is incompatible with ac_eras chains. Please use genaddresses then RNDsendmany after block 100 instead.')
+
 
     def sendtoaddress(chain, rpc_connection):
         address = input("Please specify address to withdraw coins to. It must not be owned by this node: ")
@@ -594,8 +621,8 @@ def createchain(chain, rpc_connection):
         print(sendtoaddress_result)
 
     if os.path.isfile("list.json"):
-        huh = input('Existing list.json found, would you like to import it?(y/n): ').lower()
-        if huh.startswith('y'):
+        user_yn = input('Existing list.json found, would you like to import it?(y/n): ').lower()
+        if user_yn.startswith('y'):
             import_list(chain, rpc_connection)
         else:
             return('Error: must import a list.json to begin.')
@@ -618,7 +645,7 @@ def createchain(chain, rpc_connection):
         print('Balance: ' + str(rpc_connection.getbalance()))
         sendtoaddress(chain, rpc_connection)
     RNDsendmany_TUI(chain, rpc_connection)
-    restart_daemon(chain, rpc_connection)
+    restart_daemon(chain, params, rpc_connection)
     rpc_connection.setgenerate(True, 0)
     return('Your node has now begun staking. Ensure that at least one other node is mining.')
 

@@ -79,7 +79,9 @@ def select_loop(error):
             user_chain = input('Please specify chain. It must be defined in assetchains.json. ' +
                                'If assetchains.json does not exist locally, the official one ' +
                                'will be fetched from jl777\'s repo.\nChain: ')
-            stakerlib.start_daemon(user_chain)
+            start_daemon_result = stakerlib.start_daemon(user_chain)
+            if isinstance(start_daemon_result, str):
+                select_loop(start_daemon_result)
             add_chain(user_chain)
             chain_loop(user_chain, '')
         # add/remove chain
@@ -99,8 +101,9 @@ def chain_loop(chain, msg):
     try:    
         rpc_connection = stakerlib.def_credentials(chain)
         dummy = rpc_connection.getbalance() # test connection
-    except:
+    except Exception as e:
         os.system('clear')
+        print(e)
         error = 'Error: Could not connect to daemon. ' + chain + ' is not running or rpc creds not found.'
         select_loop(error)
     while True:
@@ -129,7 +132,8 @@ def chain_loop(chain, msg):
             msg = stakerlib.createchain(chain, rpc_connection)
             chain_loop(chain, msg)
         elif int(selection) == 7:
-            msg = stakerlib.restart_daemon(chain, rpc_connection)
+            params = stakerlib.get_chainparams(chain)
+            msg = stakerlib.restart_daemon(chain, params, rpc_connection)
             chain_loop(chain, msg)
         else:
             print('BUG!')
