@@ -531,7 +531,11 @@ def restart_daemon(chain, params, rpc_connection):
     pubkey = '-pubkey=' + mypubkey
     param_list = [komodod_path]
     for i in params:
-       param_list.append('-' + i + '=' + params[i])
+        if i == 'addnode':
+           for ip in params[i]:
+               param_list.append('-addnode=' + ip)
+       else:
+           param_list.append('-' + i + '=' + params[i])
     param_list.append(blocknotify)
     param_list.append(pubkey)
     proc = subprocess.Popen(param_list, stdout=DEVNULL, stderr=STDOUT, preexec_fn=os.setpgrp)
