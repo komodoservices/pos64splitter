@@ -167,7 +167,7 @@ def unlockunspent(rpc_connection):
 # with amount as value for each address
 def sendmany64(rpc_connection, amount):
     addresses_dict = {}
-    with open('list.json') as key_list:
+    with open(chain + ".json") as key_list:
         json_data = json.load(key_list)
         for i in json_data:
             address = i[3]
@@ -306,8 +306,8 @@ def RNDsendmany_TUI(chain, rpc_connection):
     print('Success!')
 
 def genaddresses(chain, rpc_connection): # FIXME don't print in start script
-    if os.path.isfile("list.json"):
-        return('Error: Already have list.json, move it if you would like to '
+    if os.path.isfile(chain + ".json"):
+        return('Error: Already have ' + chain + '.json, move it if you would like to '
               'generate another set.You can use importlist.py script to import'
               ' the already existing list.py to a given chain.')
     
@@ -327,18 +327,18 @@ def genaddresses(chain, rpc_connection): # FIXME don't print in start script
         segids_array.append(segids[position])
 
     # save output to list.py
-    f = open("list.json", "w+")
+    f = open(chain + ".json", "w+")
     f.write(json.dumps(segids_array))
-    return('Success! list.json created. '
+    return('Success! ' + chain + '.json created. '
           'THIS FILE CONTAINS PRIVATE KEYS. KEEP IT SAFE.')
 
 # FIXME make this rescan only on 64th import
 # import list.json to chain 
 def import_list(chain, rpc_connection):
-    if not os.path.isfile("list.json"):
+    if not os.path.isfile(chain + ".json"):
         return('Error: No list.json file present. Use genaddresses.py script to generate one.')
 
-    with open('list.json') as key_list:
+    with open(chain + ".json") as key_list:
         json_data = json.load(key_list)
         for i in json_data:
             print(i[3])
@@ -475,7 +475,7 @@ def start_daemon(chain):
     print(params)
     komodod_path = sys.path[0] + '/komodod'
     param_list = [komodod_path]
-    with open('list.json', 'r') as f:
+    with open(chain + ".json", 'r') as f:
         list_json = json.load(f)
         mypubkey = list_json[0][1]
     pubkey = '-pubkey=' + mypubkey
@@ -500,7 +500,7 @@ def start_daemon(chain):
 
 def restart_daemon(chain, params, rpc_connection):
     magic_check = rpc_connection.getinfo()['p2pport']
-    with open('list.json', 'r') as f:
+    with open(chain + ".json", 'r') as f:
         list_json = json.load(f)
         mypubkey = list_json[0][1]
     print(magic_check)
@@ -619,7 +619,7 @@ def createchain(chain, rpc_connection):
         sendtoaddress_result = rpc_connection.sendtoaddress(address_check, amount)
         print(sendtoaddress_result)
 
-    if os.path.isfile("list.json"):
+    if os.path.isfile(chain + ".json"):
         user_yn = input('Existing list.json found, would you like to import it?(y/n): ').lower()
         if user_yn.startswith('y'):
             import_list(chain, rpc_connection)
