@@ -486,7 +486,6 @@ def start_daemon(chain, no_pk):
                param_list.append('-addnode=' + ip)
        else:
            param_list.append('-' + i + '=' + params[i])
-    param_list.append(pubkey)
     proc = subprocess.Popen(param_list, stdout=DEVNULL, stderr=STDOUT, preexec_fn=os.setpgrp)
     print('Waiting for daemon to respond, please wait')
     while True:
