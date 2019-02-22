@@ -40,10 +40,10 @@ except:
     sys.exit(0)
 
 try:
-    with open('list.json') as list:
+    with open(CHAIN + '.json') as list:
         segid_addresses = json.load(list)
 except:
-    logging.debug('Could not load list.json please make sure it is in the directory where komodod is located. Exiting')
+    logging.debug('Could not load ' + CHAIN + '.json please make sure it is in the directory where komodod is located. Exiting')
     sys.exit(0)
 
 # Get pubkey being mined to.
@@ -139,7 +139,7 @@ else:
             tx_value += getrawtx_result['vout'][0]['valueSat']
             staked_from = staked_from_address(CHAIN, getblock_result)
         else:
-            logging.debug('The address is not imported. Please check you imported list.json. Exiting.')
+            logging.debug('The address is not imported. Please check you imported ' + CHAIN + '.json. Exiting.')
             sys.exit(0)
     for txid in txid_list:
         input_dict = {
