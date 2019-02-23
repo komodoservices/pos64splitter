@@ -107,7 +107,7 @@ def select_loop(error):
             add_chain(0)
             staker_conf = load_conf()
             initial_menu(staker_conf, '')
-            chain_index = stakerlib.user_inputInt(0,len(staker_conf) + 1,"Select chain:")
+            chain_index = stakerlib.user_inputInt(0,len(staker_conf) + 2,"Select chain:")
         else:
             chain = staker_conf[chain_index][0]
             chain_loop(chain, '')
