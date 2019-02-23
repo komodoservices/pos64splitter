@@ -699,9 +699,7 @@ def fetch_bootstrap(chain):
                     return('Error: Download failed with error ' + str(e))
                 try:
                     shutil.rmtree(chain_dir + '/blocks')
-                    shutil.rmtree(chain_dir + '/chainstate')
-                except Exception as e:
-                    return('Error: deleting local blockchain failed with ' + str(e))   
+                    shutil.rmtree(chain_dir + '/chainstate') 
     else:
         return('Dexstats does not have a bootstrap for this coin. You must sync the chain manually.')
 
