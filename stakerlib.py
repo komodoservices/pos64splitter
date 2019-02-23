@@ -697,8 +697,9 @@ def fetch_bootstrap(chain):
                     urllib.request.urlretrieve(bootstrap['downloadurl'], chain + "-bootstrap.tar.gz")
                 except Exception as e:
                     return('Error: Download failed with error ' + str(e))
-                try:
+                if os.path.isdir(chain_dir + '/blocks')
                     shutil.rmtree(chain_dir + '/blocks')
+                if os.path.isdir(chain_dir + '/chainstate')
                     shutil.rmtree(chain_dir + '/chainstate') 
     else:
         return('Dexstats does not have a bootstrap for this coin. You must sync the chain manually.')
