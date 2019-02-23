@@ -342,15 +342,18 @@ def genaddresses(chain, rpc_connection): # FIXME don't print in start script
 # FIXME make this rescan only on 64th import
 # import list.json to chain 
 def import_list(chain, rpc_connection):
-    if not os.path.isfile(chain + ".json"):
-        return('Error: No list.json file present. Use genaddresses.py script to generate one.')
+    user_input = input('Please specify a json file to import: ')
+    if not os.path.isfile(user_input):
+        return('Error: File not found. Make sure you use the full file name. ' +
+               'You can use the genaddresses option to generate a new one.')
 
-    with open(chain + ".json") as key_list:
+    # FIXME add check to see if it's actually json
+    with open(user_input) as key_list:
         json_data = json.load(key_list)
         for i in json_data:
             print(i[3])
             rpc_connection.importprivkey(i[2])
-    print('Success!')
+    return('Success!')
     
 def extract_segid(_segid,unspents):
     ret = []
@@ -528,6 +531,7 @@ def restart_daemon(chain, params, rpc_connection):
     print('Waiting for daemon to stop, please wait')
     while True:
         try:
+            time.sleep(5)
             rpc_connection.getinfo()
             continue
         except Exception as e:
@@ -546,8 +550,6 @@ def restart_daemon(chain, params, rpc_connection):
     param_list.append(blocknotify)
     param_list.append(pubkey)
     proc = subprocess.Popen(param_list, stdout=DEVNULL, stderr=STDOUT, preexec_fn=os.setpgrp)
-    #check_call(param_list, stdout=DEVNULL, stderr=STDOUT)
-    #subprocess.run(param_list, shell=False, stdout=None, stderr=None, timeout=1)
     print('Waiting for daemon to respond, please wait')
     while True:
         time.sleep(10)
@@ -729,12 +731,12 @@ def fetch_bootstrap(chain):
     print('Extracting ' + bootstrap + ' to ' + chain_path + ' , please wait')
     for i in extract:
         tar.extract(i, path=chain_path) 
-    user_yn = input('Bootstrap installed. Would you like to delete the tar.gz file?(y/n)')
+    user_yn = input('Bootstrap installed. Would you like to delete the tar.gz file?(y/n): ')
     if user_yn.startswith('y'):
         os.remove(bootstrap)
-        return('Sucess! Use the start a chain from assetchains.json option to start the daemon.' +
+        return('Success! Use the start a chain from assetchains.json option to start the daemon.' +
                'If you found this feature useful, please consider donating to dexstats.info ' +
                '\nRQFwNuhJ5HP1QbfU2wLj8ZUse43LSKrzei')
 
     else:
-        return('Sucess! Use the start a chain from assetchains.json option to start the daemon.')
+        return('Success! Use the start a chain from assetchains.json option to start the daemon.')

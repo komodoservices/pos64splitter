@@ -21,10 +21,13 @@ def load_conf():
         
     return(staker_conf)
 
-def initial_menu(staker_conf, error):
+def initial_menu(staker_conf, msg):
     os.system('clear')
-    print(stakerlib.colorize(error, 'red'))
-    print(stakerlib.colorize('pos64staker by KMDLabs', 'green'))
+    if msg[:5] == 'Error':
+        print(stakerlib.colorize(msg, 'red'))
+    else:
+        print(stakerlib.colorize(msg, 'green'))
+    print(stakerlib.colorize('pos64staker by KMDLabs', 'magenta'))
     print(stakerlib.colorize('===============', 'blue'))
     menu_item = 0
     for i in staker_conf:
