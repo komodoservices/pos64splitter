@@ -14,7 +14,6 @@ def load_conf():
         print(e)
         staker_conf = []
         user_input = input('No staker.conf conf file, specify a chain to begin:')
-        # FIXME
         msg = stakerlib.start_daemon(user_input, 1)
         staker_conf.append([user_input])
         with open('staker.conf', "a+") as f:
@@ -85,7 +84,7 @@ def select_loop(error):
             user_chain = input('Please specify chain. It must be defined in assetchains.json. ' +
                                'If assetchains.json does not exist locally, the official one ' +
                                'will be fetched from jl777\'s repo.\nChain: ')
-            start_daemon_result = stakerlib.start_daemon(user_chain, 1)
+            start_daemon_result = stakerlib.start_daemon(user_chain, 1) # FIXME start with pubkey when possible
             if isinstance(start_daemon_result, str):
                 select_loop(start_daemon_result)
             names = []
@@ -168,13 +167,11 @@ def stats_loop(chain, msg):
             os.system('clear')
             chain_loop(chain, '')
         elif int(selection) == 1:
-            msg = rpc_connection.getbalance()
-            stats_loop(chain, str(msg))
+            msg = str(rpc_connection.getbalance())
+            stats_loop(chain, msg)
         elif int(selection) == 2:
-            msg = stakerlib.RNDsendmany_TUI(chain, rpc_connection)
-            chain_loop(chain, msg)
-        elif int(selection) == 8:
-            stats_loop(chain, '')
+            msg = str(len(rpc_connection.listunspent()))
+            stats_loop(chain, msg)
         else:
             print('BUG!')
 
