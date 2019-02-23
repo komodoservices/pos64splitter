@@ -31,7 +31,8 @@ def initial_menu(staker_conf, error):
         print(str(menu_item) + ' | ' + str(i[0]))
         menu_item += 1
     print('\n' + str(len(staker_conf)) + ' | Start a chain from assetchains.json')
-    print(str(len(staker_conf) + 1) + ' | <Add/remove chain>')
+    print(str(len(staker_conf) + 1) + ' | Bootstrap a chain from dexstats.info') 
+    print(str(len(staker_conf) + 2) + ' | <Add/remove chain>')
     print('q | Exit TUI')
     print(stakerlib.colorize('===============\n', 'blue'))
 
@@ -77,7 +78,7 @@ def add_chain(chain):
 def select_loop(error):
     staker_conf = load_conf()
     initial_menu(staker_conf, error)
-    chain_index = stakerlib.user_inputInt(0,len(staker_conf) + 1,"Select chain:")
+    chain_index = stakerlib.user_inputInt(0,len(staker_conf) + 2,"Select chain:")
     while True:
         # Start chain from assetchains.json
         if chain_index == len(staker_conf):
@@ -93,8 +94,13 @@ def select_loop(error):
             if not user_chain in names:
                 add_chain(user_chain)
             chain_loop(user_chain, '')
-        # add/remove chain
+        # bootstrap from dexstats
         elif chain_index == len(staker_conf) + 1:
+            user_chain = input('Please specify chain: ')
+            msg = stakerlib.fetch_bootstrap(user_chain)
+            select_loop(msg) # FIXME colours
+        # add/remove chain
+        elif chain_index == len(staker_conf) + 2:
             add_chain(0)
             staker_conf = load_conf()
             initial_menu(staker_conf, '')

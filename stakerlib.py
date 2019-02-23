@@ -13,13 +13,14 @@ import os.path
 import subprocess
 from subprocess import DEVNULL, STDOUT, check_call
 import urllib.request
+import tarfile
+import shutil
 import time
 from slickrpc import Proxy
 
 
-# fucntion to define rpc_connection
-def def_credentials(chain):
-    rpcport = '';
+# define data dir
+def def_data_dir():
     operating_system = platform.system()
     if operating_system == 'Darwin':
         ac_dir = os.environ['HOME'] + '/Library/Application Support/Komodo'
@@ -27,6 +28,12 @@ def def_credentials(chain):
         ac_dir = os.environ['HOME'] + '/.komodo'
     elif operating_system == 'Windows':
         ac_dir = '%s/komodo/' % os.environ['APPDATA']
+    return(ac_dir)
+
+# fucntion to define rpc_connection
+def def_credentials(chain):
+    rpcport = '';
+    ac_dir = def_data_dir()
     if chain == 'KMD':
         coin_config_file = str(ac_dir + '/komodo.conf')
     else:
@@ -665,3 +672,76 @@ def createchain(chain, rpc_connection):
     rpc_connection.setgenerate(True, 0)
     return('Your node has now begun staking. Ensure that at least one other node is mining.')
 
+
+def fetch_bootstrap(chain):
+    bootstrap_list = []
+    urllib.request.urlretrieve("https://dexstats.info/api/bootstraps.php?version1", "bootstraps.json")
+    with open('bootstraps.json', 'r') as f:
+        bootstrap_json = json.load(f)
+    for bootstrap in bootstrap_json['mirrors']:
+        bootstrap_list.append(bootstrap['coin'])
+    if chain in bootstrap_list:
+        data_dir = def_data_dir()
+        chain_dir = data_dir + '/' + chain
+        if os.path.isdir(chain_dir + '/blocks') or os.path.isdir(chain_dir + '/chainstate'):
+            user_yn = input('You already have a data directory for ' + chain + 
+                            '. This will delete the local chain if one exists. ' +
+                            'Would you like to continue?(y/n)')
+            if not user_yn.startswith('y'):
+                return('Error: Please sync the chain manually.') 
+        for bootstrap in bootstrap_json['mirrors']:
+            if bootstrap['coin'] == chain:
+                print('Downloading ' + chain + ' bootstrap from ' + bootstrap['downloadurl'] + ' please wait')
+                # FIXME better check to test is downloads fails
+                try:
+                    urllib.request.urlretrieve(bootstrap['downloadurl'], chain + "-bootstrap.tar.gz")
+                except Exception as e:
+                    return('Error: Download failed with error ' + str(e))
+                try:
+                    shutil.rmtree(chain_dir + '/blocks')
+                    shutil.rmtree(chain_dir + '/chainstate')
+                except Exception as e:
+                    print('Error: deleting local blockchain failed with ' + str(e))   
+    else:
+        print('Dexstats does not have a bootstrap for this coin. You must sync the chain manually.')
+
+
+    extract = []
+    bootstrap = chain + '-bootstrap.tar.gz'
+    if not os.path.isfile(bootstrap):
+        return('Error: ')
+
+    tar = tarfile.open(bootstrap, "r:gz")
+    for member in tar.getmembers():
+        if member.mode != 384:
+            perms = ['blocks', 'chainstate', 'blocks/index']
+            if member.name in perms:
+                if member.mode != 448:
+                    print('Error:file ' + member.name + ' has improper file permissions! Report this to Alright')
+            else:
+                print('Error:file ' + member.name + ' has improper file permissions! Please report this to Alright2')
+        if member.name.startswith('blocks') or member.name.startswith('chainstate'):
+            extract.append(member.name)
+            #print('perm', member.mode)
+        else:
+            print('this file should not be here ' + member.name + ' Please report this to Alright.')
+
+    ac_dir = def_data_dir()
+    chain_path = ac_dir + '/' + chain
+    print('Extracting ' + bootstrap + ' to ' + chain_path + ' , please wait')
+    for i in extract:
+        tar.extract(i, path=chain_path) 
+        #print(member.mode)
+    #tar.extract(path='/home/modo0/pos64staker/boot/blah')
+    #except Exception as e:
+     #   print(e)
+    #print(wrong)
+    user_yn = input('Bootstrap installed. Would you like to delete the tar.gz file?(y/n)')
+    if user_yn.startswith('y'):
+        os.remove(bootstrap)
+        return('Sucess! Use the start a chain from assetchains.json option to start the daemon.' +
+               'If you found this feature useful, please consider donating to dexstats.info ' +
+               '\nRQFwNuhJ5HP1QbfU2wLj8ZUse43LSKrzei')
+
+    else:
+        return('Sucess! Use the start a chain from assetchains.json option to start the daemon.')
