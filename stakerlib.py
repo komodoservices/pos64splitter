@@ -701,15 +701,15 @@ def fetch_bootstrap(chain):
                     shutil.rmtree(chain_dir + '/blocks')
                     shutil.rmtree(chain_dir + '/chainstate')
                 except Exception as e:
-                    print('Error: deleting local blockchain failed with ' + str(e))   
+                    return('Error: deleting local blockchain failed with ' + str(e))   
     else:
-        print('Dexstats does not have a bootstrap for this coin. You must sync the chain manually.')
+        return('Dexstats does not have a bootstrap for this coin. You must sync the chain manually.')
 
 
     extract = []
     bootstrap = chain + '-bootstrap.tar.gz'
     if not os.path.isfile(bootstrap):
-        return('Error: ')
+        return('Error: Bootstrap download failed.')
 
     tar = tarfile.open(bootstrap, "r:gz")
     for member in tar.getmembers():
@@ -717,25 +717,19 @@ def fetch_bootstrap(chain):
             perms = ['blocks', 'chainstate', 'blocks/index']
             if member.name in perms:
                 if member.mode != 448:
-                    print('Error:file ' + member.name + ' has improper file permissions! Report this to Alright')
+                    return('Error:file ' + member.name + ' has improper file permissions! Report this to Alright')
             else:
-                print('Error:file ' + member.name + ' has improper file permissions! Please report this to Alright2')
+                return('Error:file ' + member.name + ' has improper file permissions! Please report this to Alright2')
         if member.name.startswith('blocks') or member.name.startswith('chainstate'):
             extract.append(member.name)
-            #print('perm', member.mode)
         else:
-            print('this file should not be here ' + member.name + ' Please report this to Alright.')
+            return('Error: this file should not be here ' + member.name + ' Please report this to Alright.')
 
     ac_dir = def_data_dir()
     chain_path = ac_dir + '/' + chain
     print('Extracting ' + bootstrap + ' to ' + chain_path + ' , please wait')
     for i in extract:
         tar.extract(i, path=chain_path) 
-        #print(member.mode)
-    #tar.extract(path='/home/modo0/pos64staker/boot/blah')
-    #except Exception as e:
-     #   print(e)
-    #print(wrong)
     user_yn = input('Bootstrap installed. Would you like to delete the tar.gz file?(y/n)')
     if user_yn.startswith('y'):
         os.remove(bootstrap)
