@@ -174,6 +174,9 @@ def unlockunspent(rpc_connection):
 # with amount as value for each address
 def sendmany64(rpc_connection, amount):
     addresses_dict = {}
+    if not os.path.isfile(chain + ".json"):
+        return('Error: + ' + chain + '.json not found. Please use importlist to import one ' +
+               'or genaddresses to create one.')
     with open(chain + ".json") as key_list:
         json_data = json.load(key_list)
         for i in json_data:
@@ -181,8 +184,11 @@ def sendmany64(rpc_connection, amount):
             addresses_dict[address] = amount
 
     # make rpc call, issue transaction
-    sendmany_result = rpc_connection.sendmany("", addresses_dict)
-    return(sendmany_result)
+    try:
+        sendmany_result = rpc_connection.sendmany("", addresses_dict)
+    except Exception as e:
+        return('Error: sendmany command failed with ' + str(e))
+    return('Success! ' + sendmany_result)
 
 # function to do sendmany64 UTXOS times, locking all UTXOs except change
 def sendmanyloop(rpc_connection, amount, utxos):
@@ -310,9 +316,9 @@ def RNDsendmany_TUI(chain, rpc_connection):
     unlockunspent(rpc_connection)
     for i in sendmanyloop_result:
         print(i)
-    print('Success!')
+    return('Success!')
 
-def genaddresses(chain, rpc_connection): # FIXME don't print in start script
+def genaddresses(chain, rpc_connection):
     if os.path.isfile(chain + ".json"):
         return('Error: Already have ' + chain + '.json, move it if you would like to '
               'generate another set.You can use importlist.py script to import'
@@ -740,3 +746,29 @@ def fetch_bootstrap(chain):
 
     else:
         return('Success! Use the start a chain from assetchains.json option to start the daemon.')
+
+
+def dil_wrap(method, params, rpc_connection):
+    if method == 'register' or 'sign':
+        wrapped = '"' + "[%22" + params + "%22]" + '"'
+
+    print(method, '19', wrapped)
+    rpc_result = rpc_connection.cclib(method, '19', wrapped)
+    return(rpc_result)
+
+
+def dil_register(chain, rpc_connection):
+    user_input = input('please give an abitrary name to register with: ')
+    try:
+        register_result = dil_wrap('register', user_input, rpc_connection)
+        rawhex = register_result['hex']
+    except Exception as e:
+        return('Error: dilithium register method failed with ' + str(e))
+    txid = rpc_connection.sendrawtransaction(rawhex)
+    return(str(register_result))
+
+
+def dil_sign(chain, rpc_connection):
+    user_input = input('please input 32 byte hex string for signature: ')
+    result = dil_wrap('sign', user_input, rpc_connection)
+    return(str(result))

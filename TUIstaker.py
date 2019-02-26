@@ -155,6 +155,8 @@ def chain_loop(chain, msg):
             chain_loop(chain, msg)
         elif int(selection) == 8:
             stats_loop(chain, '')
+        elif int(selection) == 9:
+            dil_loop(chain, 'Dilithium')
         else:
             print('BUG!')
 
@@ -184,8 +186,50 @@ def stats_loop(chain, msg):
         else:
             print('BUG!')
 
-chain_menu = ['sendmany64','RNDsendmany', 'genaddresses', 'importlist', 'withdraw', 'Start a new chain', 'Restart daemon with -blocknotify', 'stats']
+def dil_loop(chain, msg):
+    os.system('clear')
+    try:    
+        rpc_connection = stakerlib.def_credentials(chain)
+        dummy = rpc_connection.getbalance() # test connection
+    except Exception as e:
+        os.system('clear')
+        print(e)
+        error = 'Error: Could not connect to daemon. ' + chain + ' is not running or rpc creds not found.'
+        select_loop(error)
+    while True:
+        os.system('clear')
+        print_menu(dil_menu, chain, msg)
+        selection = stakerlib.user_inputInt(0,len(dil_menu),"make a selection:")
+        if int(selection) == 0:
+            os.system('clear')
+            chain_loop(chain, '')
+        elif int(selection) == 1:
+            msg = 'keypair'
+            dil_loop(chain, msg)
+        elif int(selection) == 2:
+            msg = stakerlib.dil_register(chain, rpc_connection)
+            dil_loop(chain, msg)
+        elif int(selection) == 3:
+            msg = stakerlib.dil_sign(chain, rpc_connection)
+            dil_loop(chain, msg)
+        elif int(selection) == 4:
+            msg = 'verify'
+            dil_loop(chain, msg)
+        elif int(selection) == 5:
+            msg = 'send'
+            dil_loop(chain, msg)
+        elif int(selection) == 6:
+            msg = 'spend'
+            dil_loop(chain, msg)
+        elif int(selection) == 7:
+            msg = 'Qsend'
+            dil_loop(chain, msg)
+        else:
+            print('BUG!')
+
+chain_menu = ['sendmany64','RNDsendmany', 'genaddresses', 'importlist', 'withdraw', 'Start a new chain', 'Restart daemon with -blocknotify', 'stats', 'Dilithium']
 stats_menu = ['balance', 'UTXO count']
+dil_menu = ['keypair','register', 'sign', 'verify', 'send', 'spend', 'Qsend']
 os.system('clear')
 select_loop('')
 
