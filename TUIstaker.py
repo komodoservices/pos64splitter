@@ -213,7 +213,7 @@ def dil_loop(chain, msg):
             msg = stakerlib.dil_sign(chain, rpc_connection)
             dil_loop(chain, msg)
         elif int(selection) == 4:
-            msg = 'verify'
+            msg = stakerlib.dil_verify(chain, rpc_connection)
             dil_loop(chain, msg)
         elif int(selection) == 5:
             msg = 'send'

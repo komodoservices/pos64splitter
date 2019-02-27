@@ -749,9 +749,14 @@ def fetch_bootstrap(chain):
 
 
 def dil_wrap(method, params, rpc_connection):
-    if method == 'register' or 'sign':
-        wrapped = '"' + "[%22" + params + "%22]" + '"'
+    print(method)
+    input('dummy')
+    if method == 'register' or method == 'sign':
+        wrapped = '\"[%22' + params + '%22]\"'
 
+    elif method == 'verify' or method == 'send':
+        print('pls')
+        wrapped = '\"[%22' + params[0] + '%22,%22' + params[1] + '%22,%22' + params[2] + '%22]\"'
     print(method, '19', wrapped)
     rpc_result = rpc_connection.cclib(method, '19', wrapped)
     return(rpc_result)
@@ -765,10 +770,44 @@ def dil_register(chain, rpc_connection):
     except Exception as e:
         return('Error: dilithium register method failed with ' + str(e))
     txid = rpc_connection.sendrawtransaction(rawhex)
-    return(str(register_result))
+    dil_dict = {}
+    dil_dict['register'] = register_result
+    with open('dil.conf', "w") as f:
+        json.dump(dil_dict, f)
+    return('Success!\npkaddr: ' + register_result['pkaddr'] + '\nskaddr: ' + register_result['skaddr'] + '\ntxid: ' + register_result['txid'])
 
 
 def dil_sign(chain, rpc_connection):
+    try:
+        with open('dil.conf') as file:
+            dil_conf = json.load(file)
+    except Exception as e:
+        return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
     user_input = input('please input 32 byte hex string for signature: ')
     result = dil_wrap('sign', user_input, rpc_connection)
+    dil_conf['sign'] = result
+    with open('dil.conf', "w") as f:
+        json.dump(dil_conf, f)
     return(str(result))
+
+
+def dil_verify(chain, rpc_connection):
+    try:
+        with open('dil.conf') as file:
+            dil_conf = json.load(file)
+    except Exception as e:
+        return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
+    if not 'sign' in dil_conf:
+        return('Error: sign result not found in dil.conf. Please use the sign commmand before continuing.')
+    print(dil_conf)
+    input('dum')
+    params = []
+    print(dil_conf['register']['txid'])
+    print(dil_conf['sign']['msg32'])
+    print(dil_conf['sign']['signature'])
+    input('weff')
+    params.append(dil_conf['register']['txid'])
+    params.append(dil_conf['sign']['msg32'])
+    params.append(dil_conf['sign']['signature'])
+    verify_result = dil_wrap('verify', params, rpc_connection)
+    return(str(verify_result))
