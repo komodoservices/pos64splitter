@@ -799,13 +799,7 @@ def dil_verify(chain, rpc_connection):
         return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
     if not 'sign' in dil_conf:
         return('Error: sign result not found in dil.conf. Please use the sign commmand before continuing.')
-    print(dil_conf)
-    input('dum')
     params = []
-    print(dil_conf['register']['txid'])
-    print(dil_conf['sign']['msg32'])
-    print(dil_conf['sign']['signature'])
-    input('weff')
     params.append(dil_conf['register']['txid'])
     params.append(dil_conf['sign']['msg32'])
     params.append(dil_conf['sign']['signature'])
