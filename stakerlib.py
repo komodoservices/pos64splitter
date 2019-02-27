@@ -761,7 +761,7 @@ def dil_wrap(method, params, rpc_connection):
     rpc_result = rpc_connection.cclib(method, '19', wrapped)
     return(rpc_result)
 
-
+# {'evalcode': 19, 'funcid': 'R', 'name': 'dilithium', 'method': 'register', 'help': 'handle, [hexseed]', 'params_required': 1, 'params_max': 2}
 def dil_register(chain, rpc_connection):
     user_input = input('please give an abitrary name to register with: ')
     try:
@@ -776,7 +776,7 @@ def dil_register(chain, rpc_connection):
         json.dump(dil_dict, f)
     return('Success!\npkaddr: ' + register_result['pkaddr'] + '\nskaddr: ' + register_result['skaddr'] + '\ntxid: ' + register_result['txid'])
 
-
+# {'evalcode': 19, 'funcid': 'S', 'name': 'dilithium', 'method': 'sign', 'help': 'msg [hexseed]', 'params_required': 1, 'params_max': 2}
 def dil_sign(chain, rpc_connection):
     try:
         with open('dil.conf') as file:
@@ -790,7 +790,7 @@ def dil_sign(chain, rpc_connection):
         json.dump(dil_conf, f)
     return(str(result))
 
-
+# {'evalcode': 19, 'funcid': 'V', 'name': 'dilithium', 'method': 'verify', 'help': 'pubtxid msg sig', 'params_required': 3, 'params_max': 3}
 def dil_verify(chain, rpc_connection):
     try:
         with open('dil.conf') as file:
@@ -805,3 +805,21 @@ def dil_verify(chain, rpc_connection):
     params.append(dil_conf['sign']['signature'])
     verify_result = dil_wrap('verify', params, rpc_connection)
     return(str(verify_result))
+
+# {'evalcode': 19, 'funcid': 'x', 'name': 'dilithium', 'method': 'send', 'help': 'handle pubtxid amount', 'params_required': 3, 'params_max': 3}
+def dil_send(chain, rpc_connection):
+    try:
+        with open('dil.conf') as f:
+            dil_conf = json.load(f)
+    except Exception as e:
+        return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
+    if not 'sign' in dil_conf:
+        return('Error: sign result not found in dil.conf. Please use the sign commmand before continuing.')
+    params = []
+    params.append(dil_conf['register']['handle'])
+    params.append(dil_conf['register']['txid'])
+    params.append(input('Please specify amount to send: '))
+    result = dil_wrap('send', params, rpc_connection)
+    rawhex = result['hex']
+    txid = rpc_connection.sendrawtransaction(rawhex)
+    return('Success! txid: ' + txid)
