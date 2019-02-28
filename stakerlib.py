@@ -77,6 +77,7 @@ def user_inputInt(low,high, msg):
 def selectRangeFloat(low,high, msg):
     while True:
         try:
+            user_input = input(msg)
             number = float(user_input)
         except ValueError:
             print("integer only, try again")
@@ -752,14 +753,14 @@ def dil_wrap(method, params, rpc_connection):
     print(method)
     input('dummy')
     if method == 'register' or method == 'sign':
-        wrapped = '\"[%22' + params + '%22]\"'
+        wrapped = '\"[%22' + str(params) + '%22]\"'
 
     elif method == 'spend':
-        wrapped = '\"[%22' + params[0] + '%22,%22' + params[1] + '%22]\"'
+        wrapped = '\"[%22' + str(params[0]) + '%22,%22' + str(params[1]) + '%22]\"'
 
     elif method == 'verify' or method == 'send':
         print('pls')
-        wrapped = '\"[%22' + params[0] + '%22,%22' + params[1] + '%22,%22' + params[2] + '%22]\"'
+        wrapped = '\"[%22' + str(params[0]) + '%22,%22' + str(params[1]) + '%22,%22' + str(params[2]) + '%22]\"'
     print(method, '19', wrapped)
     rpc_result = rpc_connection.cclib(method, '19', wrapped)
     return(rpc_result)
@@ -793,6 +794,8 @@ def dil_sign(chain, rpc_connection):
         return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
     user_input = input('please input 32 byte hex string for signature: ')
     result = dil_wrap('sign', user_input, rpc_connection)
+    if 'error' in result:
+        return('Error: dilithium sign command failed with: ' + str(result['error']))
     dil_conf['sign'] = result
     with open('dil.conf', "w") as f:
         json.dump(dil_conf, f)
@@ -826,7 +829,9 @@ def dil_send(chain, rpc_connection):
     params = []
     params.append(dil_conf['register']['handle'])
     params.append(dil_conf['register']['txid'])
-    params.append(input('Please specify amount to send: '))
+    balance = rpc_connection.getbalance()
+    send_amount = selectRangeFloat(0,balance, 'Please specify the amount to spend: ')
+    params.append(send_amount)
     result = dil_wrap('send', params, rpc_connection)
     dil_conf['send'] = result
     with open('dil.conf', "w") as f:
@@ -852,7 +857,11 @@ def dil_spend(chain, rpc_connection):
     params.append(dil_conf['send']['txid'])
     params.append(getrawtx_result['vout'][1]['scriptPubKey']['hex'])
     result = dil_wrap('spend', params, rpc_connection)
-    rawhex = result['hex']
-    txid = rpc_connection.sendrawtransaction(rawhex)
-    return(txid)
+    try:
+        rawhex = result['hex']
+        txid = rpc_connection.sendrawtransaction(rawhex)
+        return('Success! ' + txid)
+    except Exception as e:
+        return('Error: ' + str(e))
+    #return(txid)
    #params.append(dil_conf['
