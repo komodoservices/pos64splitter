@@ -763,6 +763,11 @@ def dil_wrap(method, params, rpc_connection):
 
 # {'evalcode': 19, 'funcid': 'R', 'name': 'dilithium', 'method': 'register', 'help': 'handle, [hexseed]', 'params_required': 1, 'params_max': 2}
 def dil_register(chain, rpc_connection):
+    if os.path.isfile('dil.conf'):
+        user_yn = input('You have already registered. Would you like to continue? ' + 
+                        'This will overwrite your current dil.conf.(y/n): ')
+        if not user_yn.startswith('y'):
+            return('Exited')
     user_input = input('please give an abitrary name to register with: ')
     try:
         register_result = dil_wrap('register', user_input, rpc_connection)
@@ -788,7 +793,7 @@ def dil_sign(chain, rpc_connection):
     dil_conf['sign'] = result
     with open('dil.conf', "w") as f:
         json.dump(dil_conf, f)
-    return(str(result))
+    return('Success! Result saved to dil.conf')
 
 # {'evalcode': 19, 'funcid': 'V', 'name': 'dilithium', 'method': 'verify', 'help': 'pubtxid msg sig', 'params_required': 3, 'params_max': 3}
 def dil_verify(chain, rpc_connection):
@@ -820,6 +825,30 @@ def dil_send(chain, rpc_connection):
     params.append(dil_conf['register']['txid'])
     params.append(input('Please specify amount to send: '))
     result = dil_wrap('send', params, rpc_connection)
+    dil_conf['send'] = result
+    with open('dil.conf', "w") as f:
+        json.dump(dil_conf, f)
     rawhex = result['hex']
     txid = rpc_connection.sendrawtransaction(rawhex)
     return('Success! txid: ' + txid)
+
+
+# {'evalcode': 19, 'funcid': 'y', 'name': 'dilithium', 'method': 'spend', 'help': 'sendtxid scriptPubKey [hexseed]', 'params_required': 2, 'params_max': 3}
+def dil_spend(chain, rpc_connection):
+    try:
+        with open('dil.conf') as f:
+            dil_conf = json.load(f)
+    except Exception as e:
+        return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
+    if not 'sign' in dil_conf:
+        return('Error: sign result not found in dil.conf. Please use the sign commmand before continuing.')
+    elif not 'send' in dil_conf:
+        return('Error: sign result not found in dil.conf. Please use the send commmand before continuing.')
+    params = []
+    getrawtx_result = rpc_connection.getrawtransaction(dil_conf['send']['txid'], 1)
+    params.append(dil_conf['send']['txid'])
+    params.append(getrawtx_result['vout'][1]['scriptPubKey']['hex'])
+    #print(scriptPubKey)
+    input('dummmmmy')
+    return(str(params))
+   #params.append(dil_conf['

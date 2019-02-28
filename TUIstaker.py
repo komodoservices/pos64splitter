@@ -219,7 +219,7 @@ def dil_loop(chain, msg):
             msg = stakerlib.dil_send(chain, rpc_connection)
             dil_loop(chain, msg)
         elif int(selection) == 6:
-            msg = 'spend'
+            msg = stakerlib.dil_spend(chain, rpc_connection)
             dil_loop(chain, msg)
         elif int(selection) == 7:
             msg = 'Qsend'
