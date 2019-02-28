@@ -754,6 +754,9 @@ def dil_wrap(method, params, rpc_connection):
     if method == 'register' or method == 'sign':
         wrapped = '\"[%22' + params + '%22]\"'
 
+    elif method == 'spend':
+        wrapped = '\"[%22' + params[0] + '%22,%22' + params[1] + '%22]\"'
+
     elif method == 'verify' or method == 'send':
         print('pls')
         wrapped = '\"[%22' + params[0] + '%22,%22' + params[1] + '%22,%22' + params[2] + '%22]\"'
@@ -848,7 +851,8 @@ def dil_spend(chain, rpc_connection):
     getrawtx_result = rpc_connection.getrawtransaction(dil_conf['send']['txid'], 1)
     params.append(dil_conf['send']['txid'])
     params.append(getrawtx_result['vout'][1]['scriptPubKey']['hex'])
-    #print(scriptPubKey)
-    input('dummmmmy')
-    return(str(params))
+    result = dil_wrap('spend', params, rpc_connection)
+    rawhex = result['hex']
+    txid = rpc_connection.sendrawtransaction(rawhex)
+    return(txid)
    #params.append(dil_conf['
