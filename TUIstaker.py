@@ -222,14 +222,17 @@ def dil_loop(chain, msg):
             msg = stakerlib.dil_spend(chain, rpc_connection)
             dil_loop(chain, msg)
         elif int(selection) == 7:
-            msg = 'Qsend'
+            msg = stakerlib.dil_Qsend(chain, rpc_connection)
+            dil_loop(chain, msg)
+        elif int(selection) == 8:
+            msg = stakerlib.dil_balance(chain, rpc_connection)
             dil_loop(chain, msg)
         else:
             print('BUG!')
 
 chain_menu = ['sendmany64','RNDsendmany', 'genaddresses', 'importlist', 'withdraw', 'Start a new chain', 'Restart daemon with -blocknotify', 'stats', 'Dilithium']
 stats_menu = ['balance', 'UTXO count']
-dil_menu = ['keypair','register', 'sign', 'verify', 'send', 'spend', 'Qsend']
+dil_menu = ['keypair','register', 'sign', 'verify', 'Qsend', 'spend', 'Qsend', 'Qbalance']
 os.system('clear')
 select_loop('')
 

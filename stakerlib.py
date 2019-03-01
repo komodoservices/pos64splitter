@@ -855,8 +855,10 @@ def dil_spend(chain, rpc_connection):
     params = []
     getrawtx_result = rpc_connection.getrawtransaction(dil_conf['send']['txid'], 1)
     params.append(dil_conf['send']['txid'])
-    params.append(getrawtx_result['vout'][1]['scriptPubKey']['hex'])
+    params.append('76a9148a24166f65e5280d7993e951719d7dc443e765c488ac')  # getrawtx_result['vout'][1]['scriptPubKey']['hex'])
     result = dil_wrap('spend', params, rpc_connection)
+    print(result)
+    input('gre')
     try:
         rawhex = result['hex']
         txid = rpc_connection.sendrawtransaction(rawhex)
@@ -865,3 +867,21 @@ def dil_spend(chain, rpc_connection):
         return('Error: ' + str(e))
     #return(txid)
    #params.append(dil_conf['
+
+# cclib Qsend 19 \"[%22mypubtxid%22,%22<hexseed>%22,%22<destpubtxid>%22,0.777]\"
+# {'evalcode': 19, 'funcid': 'Q', 'name': 'dilithium', 'method': 'Qsend', 'help': "mypubtxid hexseed/'mypriv' destpubtxid,amount, ...", 'params_required': 4, 'params_max': 66}
+def dil_Qsend(chain, rpc_connection):
+    try:
+        with open('dil.conf') as f:
+            dil_conf = json.load(f)
+    except Exception as e:
+        return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
+    if not 'sign' in dil_conf:
+        return('Error: sign result not found in dil.conf. Please use the sign commmand before continuing.')
+    elif not 'send' in dil_conf:
+        return('Error: sign result not found in dil.conf. Please use the send commmand before continuing.')
+    return(dil_conf['register']['txid'])
+    
+
+def dil_balance(chain, rpc_connection):
+    return('no')
