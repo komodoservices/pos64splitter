@@ -748,14 +748,16 @@ def fetch_bootstrap(chain):
     else:
         return('Success! Use the start a chain from assetchains.json option to start the daemon.')
 
-
+# cclib keypair 19 \"[%22rand%22]\"
 def dil_wrap(method, params, rpc_connection):
     print(method)
     input('dummy')
-    if method == 'register' or method == 'sign':
+    if method == 'keypair':
+        wrapped = '\"[%22rand%22]\"'
+    if method == 'sign':
         wrapped = '\"[%22' + str(params) + '%22]\"'
 
-    elif method == 'spend':
+    elif method == 'spend' or method == 'register':
         wrapped = '\"[%22' + str(params[0]) + '%22,%22' + str(params[1]) + '%22]\"'
 
     elif method == 'verify' or method == 'send':
@@ -768,21 +770,47 @@ def dil_wrap(method, params, rpc_connection):
 # {'evalcode': 19, 'funcid': 'R', 'name': 'dilithium', 'method': 'register', 'help': 'handle, [hexseed]', 'params_required': 1, 'params_max': 2}
 def dil_register(chain, rpc_connection):
     if os.path.isfile('dil.conf'):
-        user_yn = input('You have already registered. Would you like to continue? ' + 
-                        'This will overwrite your current dil.conf.(y/n): ')
+        user_yn = input('You have already registered. ' + 
+                        'Would you like to create another handle?(y/n): ')
         if not user_yn.startswith('y'):
             return('Exited')
-    user_input = input('please give an abitrary name to register with: ')
+
+    # create dummy conf is one does not exist
+    else:
+        with open('dil.conf', "w") as f:
+            json.dump([], f)
+    user_input = input('please give an abitrary name to register with.' +
+                       'This will create a dilithium privkey that is ' +
+                       'tied to the current -pubkey: ')
+    with open('dil.conf') as file:
+        dil_conf = json.load(file)
+    params = []
+    params.append(user_input)
+
+    # generate random seed key pair
+    keypair = dil_wrap('keypair', 0, rpc_connection)
+    params.append(keypair['seed'])
+
+    # register with seed from keypair result
     try:
-        register_result = dil_wrap('register', user_input, rpc_connection)
-        rawhex = register_result['hex']
+        register_result = dil_wrap('register', params, rpc_connection)
+        #rawhex = register_result['hex']
     except Exception as e:
         return('Error: dilithium register method failed with ' + str(e))
-    txid = rpc_connection.sendrawtransaction(rawhex)
-    dil_dict = {}
-    dil_dict['register'] = register_result
+    rawhex = register_result['hex']
+
+    #broadcast register transaction
+    try:
+        txid = rpc_connection.sendrawtransaction(rawhex)
+    except Exception as e:
+        return('Error: attempting to broadcast register failed with ' + str(e))
+
+    register_result['normal_pubkey'] = rpc_connection.setpubkey()['pubkey']
+    print(register_result)
+    input('revrverv')
+    dil_conf.append(register_result)
     with open('dil.conf', "w") as f:
-        json.dump(dil_dict, f)
+        json.dump(dil_conf, f)
     return('Success!\npkaddr: ' + register_result['pkaddr'] + '\nskaddr: ' + register_result['skaddr'] + '\ntxid: ' + register_result['txid'])
 
 # {'evalcode': 19, 'funcid': 'S', 'name': 'dilithium', 'method': 'sign', 'help': 'msg [hexseed]', 'params_required': 1, 'params_max': 2}
