@@ -875,9 +875,7 @@ def dil_send(chain, rpc_connection):
     params.append(pubtxid)
     params.append(send_amount)
     result = dil_wrap('send', params, rpc_connection)
-    #dil_conf['send'] = result
-    with open('dil.conf', "w") as f:
-        json.dump(dil_conf, f)
+    # FIXME log all sends to dil.log 
     rawhex = result['hex']
     txid = rpc_connection.sendrawtransaction(rawhex)
     return('Success! txid: ' + txid)
