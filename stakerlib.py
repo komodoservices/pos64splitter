@@ -805,9 +805,7 @@ def dil_register(chain, rpc_connection):
     except Exception as e:
         return('Error: attempting to broadcast register failed with ' + str(e))
 
-    register_result['normal_pubkey'] = rpc_connection.setpubkey()['pubkey']
-    print(register_result)
-    input('revrverv')
+    register_result['normal_pubkey'] = rpc_connection.setpubkey()['pubkey'] # FIXME check if -pubkey is set prior to entering dil menu
     dil_conf.append(register_result)
     with open('dil.conf', "w") as f:
         json.dump(dil_conf, f)
@@ -851,17 +849,25 @@ def dil_send(chain, rpc_connection):
         with open('dil.conf') as f:
             dil_conf = json.load(f)
     except Exception as e:
-        return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
-    if not 'sign' in dil_conf:
-        return('Error: sign result not found in dil.conf. Please use the sign commmand before continuing.')
+        return('Error: failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
     params = []
-    params.append(dil_conf['register']['handle'])
-    params.append(dil_conf['register']['txid'])
+    count = 0
+    for i in dil_conf:
+        print(str(count) + ' | ' + i['handle'])
+        count += 1
+    #params.append(dil_conf['register']['handle'])
+    #params.append(dil_conf['register']['txid'])
     balance = rpc_connection.getbalance()
-    send_amount = selectRangeFloat(0,balance, 'Please specify the amount to spend: ')
+    print('len', len(dil_conf))
+    handle = user_inputInt(0,len(dil_conf)-1,"Select handle to deposit coins to: ") # FIXME add a warning here if normal_pubkey is not own by current wallet
+    print('Current balance: ' + str(balance))
+    print(dil_conf[handle]['handle'])
+    send_amount = selectRangeFloat(0,balance, 'Please specify the amount to deposit: ')
+    params.append(dil_conf[handle]['handle'])
+    params.append(dil_conf[handle]['txid'])
     params.append(send_amount)
     result = dil_wrap('send', params, rpc_connection)
-    dil_conf['send'] = result
+    #dil_conf['send'] = result
     with open('dil.conf', "w") as f:
         json.dump(dil_conf, f)
     rawhex = result['hex']

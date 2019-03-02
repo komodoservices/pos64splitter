@@ -232,7 +232,7 @@ def dil_loop(chain, msg):
 
 chain_menu = ['sendmany64','RNDsendmany', 'genaddresses', 'importlist', 'withdraw', 'Start a new chain', 'Restart daemon with -blocknotify', 'stats', 'Dilithium']
 stats_menu = ['balance', 'UTXO count']
-dil_menu = ['keypair','Register a new handle', 'sign', 'verify', 'Qsend', 'spend', 'Qsend', 'balances']
+dil_menu = ['keypair','Register a new handle', 'sign', 'verify', 'Deposit t -> q', 'spend', 'Qsend', 'balances']
 os.system('clear')
 select_loop('')
 
