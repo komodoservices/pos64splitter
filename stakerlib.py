@@ -845,26 +845,34 @@ def dil_verify(chain, rpc_connection):
 
 # {'evalcode': 19, 'funcid': 'x', 'name': 'dilithium', 'method': 'send', 'help': 'handle pubtxid amount', 'params_required': 3, 'params_max': 3}
 def dil_send(chain, rpc_connection):
-    try:
-        with open('dil.conf') as f:
-            dil_conf = json.load(f)
-    except Exception as e:
-        return('Error: failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
+    user_yn = input('Would you like to deposit coins to an external handle? ' + 
+                    ' If you select no, the local handles saved in dil.conf ' + 
+                    'will be used(y/n):')
+    if user_yn.startswith('y'):
+        handle = input('Please input a handle to send to: ')
+        pubtxid = input('Please input corresponding pubtxid: ')
+    else:
+        try:
+            with open('dil.conf') as f:
+                dil_conf = json.load(f)
+        except Exception as e:
+            return('Error: failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
+
+        count = 0
+        for i in dil_conf:
+            print(str(count) + ' | ' + i['handle'])
+            count += 1
+        # FIXME add a warning here if normal_pubkey is not own by current wallet
+        handle_entry = user_inputInt(0,len(dil_conf)-1,"Select handle to deposit coins to: ") 
+        handle = dil_conf[handle_entry]['handle']
+        pubtxid = dil_conf[handle_entry]['txid']
+
     params = []
-    count = 0
-    for i in dil_conf:
-        print(str(count) + ' | ' + i['handle'])
-        count += 1
-    #params.append(dil_conf['register']['handle'])
-    #params.append(dil_conf['register']['txid'])
     balance = rpc_connection.getbalance()
-    print('len', len(dil_conf))
-    handle = user_inputInt(0,len(dil_conf)-1,"Select handle to deposit coins to: ") # FIXME add a warning here if normal_pubkey is not own by current wallet
     print('Current balance: ' + str(balance))
-    print(dil_conf[handle]['handle'])
     send_amount = selectRangeFloat(0,balance, 'Please specify the amount to deposit: ')
-    params.append(dil_conf[handle]['handle'])
-    params.append(dil_conf[handle]['txid'])
+    params.append(handle)
+    params.append(pubtxid)
     params.append(send_amount)
     result = dil_wrap('send', params, rpc_connection)
     #dil_conf['send'] = result
