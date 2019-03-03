@@ -756,9 +756,9 @@ def dil_wrap(method, params, rpc_connection):
         wrapped = '\"[%22rand%22]\"'
     if method == 'sign':
         wrapped = '\"[%22' + str(params) + '%22]\"'
-    elif method == 'spend' or method == 'register':
+    elif method == 'register':
         wrapped = '\"[%22' + str(params[0]) + '%22,%22' + str(params[1]) + '%22]\"'
-    elif method == 'verify' or method == 'send':
+    elif method == 'verify' or method == 'send' or method == 'spend':
         wrapped = '\"[%22' + str(params[0]) + '%22,%22' + str(params[1]) + '%22,%22' + str(params[2]) + '%22]\"'
     elif method == 'Qsend':
         wrapped = '\"[%22' + str(params[0]) + '%22,%22' + str(params[1]) + '%22,%22' + str(params[2]) + '%22,' + str(params[3]) + ']\"'
@@ -936,6 +936,14 @@ def dil_send(chain, rpc_connection):
     return('Success! Sent ' + str(send_amount) + ' to ' + handle + '(' + pubtxid + ')' +
            '\ntxid: ' + txid)
 
+# function to create a p2pkh scriptpubkey from arbitrary address
+def createraw_dummy(address, rpc_connection):
+    dummy_input = [{'txid': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 'vout': 0}]
+    output = {address: 0.01}
+    createraw_result = rpc_connection.createrawtransaction(dummy_input, output)
+    decoderaw_result = rpc_connection.decoderawtransaction(createraw_result)
+    return(decoderaw_result['vout'][0]['scriptPubKey']['hex'])
+
 
 # {'evalcode': 19, 'funcid': 'y', 'name': 'dilithium', 'method': 'spend', 'help': 'sendtxid scriptPubKey [hexseed]', 'params_required': 2, 'params_max': 3}
 def dil_spend(chain, rpc_connection):
@@ -946,24 +954,37 @@ def dil_spend(chain, rpc_connection):
         return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
 
 
-    handle = handle_select('Please select handle to send from: ')
-    print(handle)
-    user_address = input('Please input an address to send coins to. This will send the full q balance of the handle: ')
+    handle = handle_select('\nPlease select handle to send from: ')
+    user_address = input('Please input an R address to send coins to: ')
+    try:
+        address_check = addr_convert('3c', user_address)
+    except Exception as e:
+        return('Error: invalid address ' + str(e))
+
+    if address_check != user_address:
+        print('Error: Wrong address format, must use an R address')
+
+    utxo_list = dil_listunspent(chain, rpc_connection)[handle]
+    count = 0 
+    for i in utxo_list:
+        print(str(count) + ' | ' + str(i))
+        count += 1
+    utxo = user_inputInt(0,len(utxo_list), '\nPlease select a q utxo to spend: ')
     params = []
-    getrawtx_result = rpc_connection.getrawtransaction(dil_conf['send']['txid'], 1)
-    params.append(dil_conf['send']['txid'])
-    params.append('76a91429c91e0cd45f8ac495e9e33f9798403b291de98988ac')  # getrawtx_result['vout'][1]['scriptPubKey']['hex'])
+    params.append(utxo_list[utxo]['txid'])
+    params.append(createraw_dummy(user_address, rpc_connection))
+    params.append(dil_conf[handle]['seed'])
     result = dil_wrap('spend', params, rpc_connection)
-    print(result)
-    input('gre')
     try:
         rawhex = result['hex']
-        txid = rpc_connection.sendrawtransaction(rawhex)
-        return('Success! ' + txid)
     except Exception as e:
-        return('Error: ' + str(e))
-    #return(txid)
-   #params.append(dil_conf['
+        return('Error: dilthium spend rpc failed with: ' + str(e))
+    try:
+        txid = rpc_connection.sendrawtransaction(rawhex)
+    except Exception as e:
+        return('Error: broadcasting spend tx failed with: ' + str(e))
+    return('Success! ' + txid)
+
 
 # cclib Qsend 19 \"[%22mypubtxid%22,%22<hexseed>%22,%22<destpubtxid>%22,0.777]\"
 # {'evalcode': 19, 'funcid': 'Q', 'name': 'dilithium', 'method': 'Qsend', 'help': "mypubtxid hexseed/'mypriv' destpubtxid,amount, ...", 'params_required': 4, 'params_max': 66}
