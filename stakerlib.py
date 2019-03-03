@@ -16,6 +16,7 @@ import urllib.request
 import tarfile
 import shutil
 import time
+import readline # FIXME not supported on windows
 from slickrpc import Proxy
 
 
@@ -750,19 +751,16 @@ def fetch_bootstrap(chain):
 
 # cclib keypair 19 \"[%22rand%22]\"
 def dil_wrap(method, params, rpc_connection):
-    print(method)
-    input('dummy')
     if method == 'keypair':
         wrapped = '\"[%22rand%22]\"'
     if method == 'sign':
         wrapped = '\"[%22' + str(params) + '%22]\"'
-
     elif method == 'spend' or method == 'register':
         wrapped = '\"[%22' + str(params[0]) + '%22,%22' + str(params[1]) + '%22]\"'
-
     elif method == 'verify' or method == 'send':
-        print('pls')
         wrapped = '\"[%22' + str(params[0]) + '%22,%22' + str(params[1]) + '%22,%22' + str(params[2]) + '%22]\"'
+    elif method == 'Qsend':
+        wrapped = '\"[%22' + str(params[0]) + '%22,%22' + str(params[1]) + '%22,%22' + str(params[2]) + '%22,' + str(params[3]) + ']\"'
     print(method, '19', wrapped)
     rpc_result = rpc_connection.cclib(method, '19', wrapped)
     return(rpc_result)
@@ -778,12 +776,14 @@ def dil_register(chain, rpc_connection):
     # create dummy conf is one does not exist
     else:
         with open('dil.conf', "w") as f:
-            json.dump([], f)
+            json.dump({}, f)
+
     user_input = input('please give an abitrary name to register with.' +
                        'This will create a dilithium privkey that is ' +
                        'tied to the current -pubkey: ')
     with open('dil.conf') as file:
         dil_conf = json.load(file)
+
     params = []
     params.append(user_input)
 
@@ -806,10 +806,46 @@ def dil_register(chain, rpc_connection):
         return('Error: attempting to broadcast register failed with ' + str(e))
 
     register_result['normal_pubkey'] = rpc_connection.setpubkey()['pubkey'] # FIXME check if -pubkey is set prior to entering dil menu
-    dil_conf.append(register_result)
+    register_result['seed'] = keypair['seed']
+    register_result['pubkey'] = keypair['pubkey']
+    register_result['privkey'] = keypair['privkey']
+    print(register_result['handle'])
+    handle = register_result['handle']
+
+    try:
+        dil_conf[handle] = register_result
+    except:
+        dil_dict = {}
+        dil_conf[handle] = register_result
+
     with open('dil.conf', "w") as f:
         json.dump(dil_conf, f)
     return('Success!\npkaddr: ' + register_result['pkaddr'] + '\nskaddr: ' + register_result['skaddr'] + '\ntxid: ' + register_result['txid'])
+
+def handle_select(msg):
+    with open('dil.conf') as file:
+        dil_conf = json.load(file)
+    count = 0
+    handle_list = []
+    for i in dil_conf:
+        print(str(count) + ' | ' + i)
+        handle_list.append(i)
+        count += 1
+    handle_entry = user_inputInt(0,len(dil_conf)-1, msg)
+    return(handle_list[handle_entry]) 
+
+
+# list dilithium handles
+def list_handles():
+    try:
+        with open('dil.conf') as file:
+            dil_conf = json.load(file)
+    except Exception as e:
+        return('Error: verify failed with: ' + str(e) + '\nPlease use the register command if you haven\'t already')
+    for i in dil_conf:
+        print(i)
+    what = input('Press Enter to return to menu')
+    return('')
 
 # {'evalcode': 19, 'funcid': 'S', 'name': 'dilithium', 'method': 'sign', 'help': 'msg [hexseed]', 'params_required': 1, 'params_max': 2}
 def dil_sign(chain, rpc_connection):
@@ -822,10 +858,28 @@ def dil_sign(chain, rpc_connection):
     result = dil_wrap('sign', user_input, rpc_connection)
     if 'error' in result:
         return('Error: dilithium sign command failed with: ' + str(result['error']))
-    dil_conf['sign'] = result
+    count = 0
+    for i in result:
+        print(i)
+        count += 1
+
+    input('vrv')
+        #print(str(count) + ' | ' + i['handle'])
+
+    handle_entry = handle_select("Select handle to sign from: ") 
+    print(handle_entry)
+    input('ce')
     with open('dil.conf', "w") as f:
         json.dump(dil_conf, f)
-    return('Success! Result saved to dil.conf')
+
+    params = []
+    print(dil_conf[handle_entry]['txid'])
+    input('ffcrcec')
+    params.append(dil_conf['register']['txid'])
+    params.append(dil_conf['sign']['msg32'])
+    params.append(dil_conf['sign']['signature'])
+    verify_result = dil_wrap('verify', params, rpc_connection)
+    return(str(verify_result))
 
 # {'evalcode': 19, 'funcid': 'V', 'name': 'dilithium', 'method': 'verify', 'help': 'pubtxid msg sig', 'params_required': 3, 'params_max': 3}
 def dil_verify(chain, rpc_connection):
@@ -834,8 +888,7 @@ def dil_verify(chain, rpc_connection):
             dil_conf = json.load(file)
     except Exception as e:
         return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
-    if not 'sign' in dil_conf:
-        return('Error: sign result not found in dil.conf. Please use the sign commmand before continuing.')
+
     params = []
     params.append(dil_conf['register']['txid'])
     params.append(dil_conf['sign']['msg32'])
@@ -858,12 +911,9 @@ def dil_send(chain, rpc_connection):
         except Exception as e:
             return('Error: failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
 
-        count = 0
-        for i in dil_conf:
-            print(str(count) + ' | ' + i['handle'])
-            count += 1
         # FIXME add a warning here if normal_pubkey is not own by current wallet
-        handle_entry = user_inputInt(0,len(dil_conf)-1,"Select handle to deposit coins to: ") 
+        handle_entry = handle_select("Select handle to deposit coins to: ")
+        print('handle_e', handle_entry)
         handle = dil_conf[handle_entry]['handle']
         pubtxid = dil_conf[handle_entry]['txid']
 
@@ -878,7 +928,8 @@ def dil_send(chain, rpc_connection):
     # FIXME log all sends to dil.log 
     rawhex = result['hex']
     txid = rpc_connection.sendrawtransaction(rawhex)
-    return('Success! txid: ' + txid)
+    return('Success! Sent ' + str(send_amount) + ' to ' + handle + '(' + pubtxid + ')' +
+           '\ntxid: ' + txid)
 
 
 # {'evalcode': 19, 'funcid': 'y', 'name': 'dilithium', 'method': 'spend', 'help': 'sendtxid scriptPubKey [hexseed]', 'params_required': 2, 'params_max': 3}
@@ -888,14 +939,11 @@ def dil_spend(chain, rpc_connection):
             dil_conf = json.load(f)
     except Exception as e:
         return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
-    if not 'sign' in dil_conf:
-        return('Error: sign result not found in dil.conf. Please use the sign commmand before continuing.')
-    elif not 'send' in dil_conf:
-        return('Error: sign result not found in dil.conf. Please use the send commmand before continuing.')
+
     params = []
     getrawtx_result = rpc_connection.getrawtransaction(dil_conf['send']['txid'], 1)
     params.append(dil_conf['send']['txid'])
-    params.append('76a9148a24166f65e5280d7993e951719d7dc443e765c488ac')  # getrawtx_result['vout'][1]['scriptPubKey']['hex'])
+    params.append('76a91429c91e0cd45f8ac495e9e33f9798403b291de98988ac')  # getrawtx_result['vout'][1]['scriptPubKey']['hex'])
     result = dil_wrap('spend', params, rpc_connection)
     print(result)
     input('gre')
@@ -915,13 +963,75 @@ def dil_Qsend(chain, rpc_connection):
         with open('dil.conf') as f:
             dil_conf = json.load(f)
     except Exception as e:
-        return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
-    if not 'sign' in dil_conf:
-        return('Error: sign result not found in dil.conf. Please use the sign commmand before continuing.')
-    elif not 'send' in dil_conf:
-        return('Error: sign result not found in dil.conf. Please use the send commmand before continuing.')
-    return(dil_conf['register']['txid'])
-    
+        return('Error: failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
+    params = []
+    count = 0
+    #for i in dil_conf:
+     #   print(i)
+      #  print(str(count) + ' | ' + i['handle'])
+       # count += 1
+        # FIXME add a warning here if normal_pubkey is not own by current wallet
+    handle_entry = handle_select("Select handle to send coins from: ") 
+    destpubtxid = input('Please input register txid to send coins to: ')
+    send_amount = input('Please specify amount to send: ')
+    params.append(dil_conf[handle_entry]['txid'])
+    params.append(dil_conf[handle_entry]['seed'])
+    params.append(destpubtxid)
+    params.append(send_amount)
+    result = dil_wrap('Qsend', params, rpc_connection)
+    return(str(result))
+
 
 def dil_balance(chain, rpc_connection):
-    return('no')
+    CC_address = rpc_connection.cclibaddress('19')
+    address_dict = {}
+    address_dict['addresses'] = [CC_address['myCCaddress']]
+
+    CC_txids = rpc_connection.getaddresstxids(address_dict)
+    OP_rets = []
+    balances = {}
+    register_txids = []
+
+    for CC_txid in CC_txids:
+        tx = rpc_connection.getrawtransaction(CC_txid, 1)
+        for vout in tx['vout']:
+            if vout['scriptPubKey']['type'] == 'nulldata':
+                OP_hex = vout['scriptPubKey']['hex']
+                decode = rpc_connection.decodeccopret(OP_hex)
+                if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'x': # FIXME add other eval codes
+                    #print(tx['vout'][-1]['scriptPubKey']['hex'])
+                    lilend = tx['vout'][-1]['scriptPubKey']['hex']
+                    ba = bytearray.fromhex(lilend)
+                    ba.reverse()
+                    register_txid = ''.join(format(x, '02x') for x in ba)[:64]
+                    register_txids.append(register_txid)
+                    if register_txid in balances:
+                        balances[register_txid] += tx['vout'][0]['valueSat']
+                    else:
+                        balances[register_txid] = tx['vout'][0]['valueSat']
+
+    try:
+        with open('dil.conf') as file:
+            dil_conf = json.load(file)
+    except Exception as e:
+        print('no dil.conf found, not assigning handles')
+
+    final_balances = {}
+    registered = {}
+
+    # if handle is saved in dil_conf, show handle in place of register txid
+    for handle in dil_conf:
+        register_txid = dil_conf[handle]['txid']
+        if dil_conf[handle]['txid'] in balances:
+            registered[register_txid] = handle
+
+    for txid in balances:
+        if txid in registered:
+            final_balances[registered[txid]] = balances[txid] / 100000000
+        else:
+            final_balances[txid] = balances[txid] / 100000000
+    result_string = ''
+    for i in final_balances:
+        result_string += str(i) + ': '
+        result_string += str(final_balances[i]) + '\n'
+    return(result_string)

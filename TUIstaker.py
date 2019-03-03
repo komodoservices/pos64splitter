@@ -204,11 +204,11 @@ def dil_loop(chain, msg):
             os.system('clear')
             chain_loop(chain, '')
         elif int(selection) == 1:
-            msg = 'keypair'
+            msg = stakerlib.list_handles()
             dil_loop(chain, msg)
         elif int(selection) == 2:
             msg = stakerlib.dil_register(chain, rpc_connection)
-            dil_loop(chain, msg)
+            dil_loop(chain, '')
         elif int(selection) == 3:
             msg = stakerlib.dil_sign(chain, rpc_connection)
             dil_loop(chain, msg)
@@ -232,7 +232,7 @@ def dil_loop(chain, msg):
 
 chain_menu = ['sendmany64','RNDsendmany', 'genaddresses', 'importlist', 'withdraw', 'Start a new chain', 'Restart daemon with -blocknotify', 'stats', 'Dilithium']
 stats_menu = ['balance', 'UTXO count']
-dil_menu = ['keypair','Register a new handle', 'sign', 'verify', 'Deposit t -> q', 'spend', 'Qsend', 'balances']
+dil_menu = ['List handles','Register a new handle', 'sign(debug)', 'verify(debug)', 'Deposit t -> q', 'spend', 'Qsend', 'balances']
 os.system('clear')
 select_loop('')
 
