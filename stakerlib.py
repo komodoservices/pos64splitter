@@ -821,20 +821,23 @@ def dil_register(chain, rpc_connection):
 
     with open('dil.conf', "w") as f:
         json.dump(dil_conf, f)
-    return('Success!\npkaddr: ' + register_result['pkaddr'] + '\nskaddr: ' + register_result['skaddr'] + '\ntxid: ' + register_result['txid'])
+    return('Success!\npkaddr: ' + register_result['pkaddr'] + 
+           '\nskaddr: ' + register_result['skaddr'] + '\ntxid: ' + register_result['txid'])
 
-def handle_select(msg, rpc_connection):
+def handle_select(msg, rpc_connection, show_balance):
     with open('dil.conf') as file:
         dil_conf = json.load(file)
     count = 0
     handle_list = []
     balances = dil_balance(rpc_connection)
-    
     for i in dil_conf:
-        try:
-            print(str(count) + ' | ' + i + ' balance:' + str(balances[i]))
-        except:
-            print(str(count) + ' | ' + i + ' balance:0')
+        if show_balance == 1: # FIXME this could definitely display balances in a better format
+            try:
+                print(str(count) + ' | ' + i + ' balance:' + str(balances[i]))
+            except:
+                print(str(count) + ' | ' + i + ' balance:0')
+        else:
+            print(str(count) + ' | ' + i)
         handle_list.append(i)
         count += 1
     handle_entry = user_inputInt(0,len(dil_conf)-1, msg)
@@ -922,7 +925,7 @@ def dil_send(chain, rpc_connection):
             return('Error: failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
 
         # FIXME add a warning here if normal_pubkey is not own by current wallet
-        handle_entry = handle_select("Select handle to deposit coins to: ", rpc_connection)
+        handle_entry = handle_select("Select handle to deposit coins to: ", rpc_connection, 0)
         print('handle_e', handle_entry)
         handle = dil_conf[handle_entry]['handle']
         pubtxid = dil_conf[handle_entry]['txid']
@@ -959,7 +962,7 @@ def dil_spend(chain, rpc_connection):
         return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
 
 
-    handle = handle_select('\nPlease select handle to send from: ', rpc_connection)
+    handle = handle_select('\nPlease select handle to send from: ', rpc_connection, 1)
     utxo_list = dil_listunspent(chain, rpc_connection)[handle]
     if not utxo_list:
         return('Error: can\'t find q utxo for selected handle. You must send t -> q first.')
@@ -1007,7 +1010,7 @@ def dil_Qsend(chain, rpc_connection):
       #  print(str(count) + ' | ' + i['handle'])
        # count += 1
         # FIXME add a warning here if normal_pubkey is not own by current wallet
-    handle_entry = handle_select("Select handle to send coins from: ", rpc_connection) 
+    handle_entry = handle_select("Select handle to send coins from: ", rpc_connection, 1) 
     destpubtxid = input('Please input register txid to send coins to: ')
     send_amount = input('Please specify amount to send: ')
     params.append(dil_conf[handle_entry]['txid'])
