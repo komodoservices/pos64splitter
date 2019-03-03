@@ -4,6 +4,7 @@ from slickrpc import Proxy
 import json
 import sys
 import os
+import pprint
 import stakerlib
 
 def load_conf():
@@ -40,10 +41,13 @@ def initial_menu(staker_conf, msg):
     print(stakerlib.colorize('===============\n', 'blue'))
 
 def print_menu(menu_list, chain, msg):
-    if msg[:5] == 'Error':
-        print(stakerlib.colorize(msg, 'red'))
-    else:
-        print(stakerlib.colorize(msg, 'green'))
+    if isinstance(msg, dict) or isinstance(msg, list):
+        pprint.pprint(msg)
+    else: 
+        if msg[:5] == 'Error':
+            print(stakerlib.colorize(msg, 'red'))
+        else:
+            print(stakerlib.colorize(msg, 'green'))
     print(stakerlib.colorize('\n' + chain, 'magenta'))
     sync = stakerlib.is_chain_synced(chain)
     if sync != 0:
@@ -208,31 +212,28 @@ def dil_loop(chain, msg):
             dil_loop(chain, msg)
         elif int(selection) == 2:
             msg = stakerlib.dil_register(chain, rpc_connection)
-            dil_loop(chain, '')
+            dil_loop(chain, msg)
         elif int(selection) == 3:
-            msg = stakerlib.dil_sign(chain, rpc_connection)
-            dil_loop(chain, msg)
-        elif int(selection) == 4:
-            msg = stakerlib.dil_verify(chain, rpc_connection)
-            dil_loop(chain, msg)
-        elif int(selection) == 5:
             msg = stakerlib.dil_send(chain, rpc_connection)
             dil_loop(chain, msg)
-        elif int(selection) == 6:
+        elif int(selection) == 4:
             msg = stakerlib.dil_spend(chain, rpc_connection)
             dil_loop(chain, msg)
-        elif int(selection) == 7:
+        elif int(selection) == 5:
             msg = stakerlib.dil_Qsend(chain, rpc_connection)
             dil_loop(chain, msg)
-        elif int(selection) == 8:
+        elif int(selection) == 6:
             msg = stakerlib.dil_balance(chain, rpc_connection)
+            dil_loop(chain, msg)
+        elif int(selection) == 7:
+            msg = stakerlib.dil_listunspent(chain, rpc_connection)
             dil_loop(chain, msg)
         else:
             print('BUG!')
 
 chain_menu = ['sendmany64','RNDsendmany', 'genaddresses', 'importlist', 'withdraw', 'Start a new chain', 'Restart daemon with -blocknotify', 'stats', 'Dilithium']
 stats_menu = ['balance', 'UTXO count']
-dil_menu = ['List handles','Register a new handle', 'sign(debug)', 'verify(debug)', 'Deposit t -> q', 'spend', 'Qsend', 'balances']
+dil_menu = ['List handles','Register a new handle', 'send t -> q', 'send q -> t', 'Qsend', 'balances', 'q_listunspent']
 os.system('clear')
 select_loop('')
 

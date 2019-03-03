@@ -16,6 +16,7 @@ import urllib.request
 import tarfile
 import shutil
 import time
+import secrets
 import readline # FIXME not supported on windows
 from slickrpc import Proxy
 
@@ -842,59 +843,63 @@ def list_handles():
             dil_conf = json.load(file)
     except Exception as e:
         return('Error: verify failed with: ' + str(e) + '\nPlease use the register command if you haven\'t already')
+    result_dict = {}
     for i in dil_conf:
-        print(i)
-    what = input('Press Enter to return to menu')
-    return('')
+        result_dict[i] = dil_conf[i]['txid']
+    return(result_dict)
 
-# {'evalcode': 19, 'funcid': 'S', 'name': 'dilithium', 'method': 'sign', 'help': 'msg [hexseed]', 'params_required': 1, 'params_max': 2}
-def dil_sign(chain, rpc_connection):
+
+# function to decode dil send OP_RETURN, returns register txid
+def decode_dil_send(txid, rpc_connection):
+    tx = rpc_connection.getrawtransaction(txid, 1)
+    scriptPubKey = tx['vout'][-1]['scriptPubKey']['hex']
+    decode = rpc_connection.decodeccopret(scriptPubKey)
+    ba = bytearray.fromhex(scriptPubKey)
+    ba.reverse()
+    decode = rpc_connection.decodeccopret(scriptPubKey)
+    if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'x': # FIXME add other eval codes
+        register_txid = ''.join(format(x, '02x') for x in ba)[:64]
+        return(register_txid)
+    else:
+        return()
+
+def dil_listunspent(chain, rpc_connection):
     try:
-        with open('dil.conf') as file:
-            dil_conf = json.load(file)
-    except Exception as e:
-        return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
-    user_input = input('please input 32 byte hex string for signature: ')
-    result = dil_wrap('sign', user_input, rpc_connection)
-    if 'error' in result:
-        return('Error: dilithium sign command failed with: ' + str(result['error']))
-    count = 0
-    for i in result:
-        print(i)
-        count += 1
-
-    input('vrv')
-        #print(str(count) + ' | ' + i['handle'])
-
-    handle_entry = handle_select("Select handle to sign from: ") 
-    print(handle_entry)
-    input('ce')
-    with open('dil.conf', "w") as f:
-        json.dump(dil_conf, f)
-
-    params = []
-    print(dil_conf[handle_entry]['txid'])
-    input('ffcrcec')
-    params.append(dil_conf['register']['txid'])
-    params.append(dil_conf['sign']['msg32'])
-    params.append(dil_conf['sign']['signature'])
-    verify_result = dil_wrap('verify', params, rpc_connection)
-    return(str(verify_result))
-
-# {'evalcode': 19, 'funcid': 'V', 'name': 'dilithium', 'method': 'verify', 'help': 'pubtxid msg sig', 'params_required': 3, 'params_max': 3}
-def dil_verify(chain, rpc_connection):
-    try:
-        with open('dil.conf') as file:
-            dil_conf = json.load(file)
+        with open('dil.conf') as f:
+            dil_conf = json.load(f)
     except Exception as e:
         return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
 
-    params = []
-    params.append(dil_conf['register']['txid'])
-    params.append(dil_conf['sign']['msg32'])
-    params.append(dil_conf['sign']['signature'])
-    verify_result = dil_wrap('verify', params, rpc_connection)
-    return(str(verify_result))
+    CC_address = rpc_connection.cclibaddress('19')
+    address_dict = {}
+    address_dict['addresses'] = [CC_address['myCCaddress']]
+    CC_utxos = []
+    CC_txids = rpc_connection.getaddressutxos(address_dict)
+    for i in CC_txids:
+        CC_utxos.append(i['txid'])
+    register_txids = []
+    txids = []
+    result_dict = {}
+    for i in dil_conf:
+        result_dict[i] = []
+
+    for CC_txid in CC_utxos:
+        tx = rpc_connection.getrawtransaction(CC_txid, 1)
+        for vout in tx['vout']:
+            if vout['scriptPubKey']['type'] == 'nulldata':
+                OP_hex = vout['scriptPubKey']['hex']
+                decode = rpc_connection.decodeccopret(OP_hex)
+                if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'x': # FIXME add other eval codes
+                    #print(tx['vout'][-1]['scriptPubKey']['hex'])
+                    txids.append(CC_txid)
+                    register_txid = decode_dil_send(CC_txid, rpc_connection)
+                    register_txids.append(register_txid)
+                    for handle in dil_conf:
+                        if decode_dil_send(CC_txid, rpc_connection) == dil_conf[handle]['txid']:
+                            result_dict[handle].append({'txid': CC_txid, 'value': tx['vout'][0]['value']})
+
+    return(result_dict)
+
 
 # {'evalcode': 19, 'funcid': 'x', 'name': 'dilithium', 'method': 'send', 'help': 'handle pubtxid amount', 'params_required': 3, 'params_max': 3}
 def dil_send(chain, rpc_connection):
@@ -940,6 +945,10 @@ def dil_spend(chain, rpc_connection):
     except Exception as e:
         return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
 
+
+    handle = handle_select('Please select handle to send from: ')
+    print(handle)
+    user_address = input('Please input an address to send coins to. This will send the full q balance of the handle: ')
     params = []
     getrawtx_result = rpc_connection.getrawtransaction(dil_conf['send']['txid'], 1)
     params.append(dil_conf['send']['txid'])
@@ -987,12 +996,15 @@ def dil_balance(chain, rpc_connection):
     address_dict = {}
     address_dict['addresses'] = [CC_address['myCCaddress']]
 
-    CC_txids = rpc_connection.getaddresstxids(address_dict)
-    OP_rets = []
+    CC_utxos = []
+    CC_txid_info = rpc_connection.getaddressutxos(address_dict)
+    for i in CC_txid_info:
+        CC_utxos.append(i['txid'])
+
     balances = {}
     register_txids = []
 
-    for CC_txid in CC_txids:
+    for CC_txid in CC_utxos:
         tx = rpc_connection.getrawtransaction(CC_txid, 1)
         for vout in tx['vout']:
             if vout['scriptPubKey']['type'] == 'nulldata':
