@@ -823,13 +823,18 @@ def dil_register(chain, rpc_connection):
         json.dump(dil_conf, f)
     return('Success!\npkaddr: ' + register_result['pkaddr'] + '\nskaddr: ' + register_result['skaddr'] + '\ntxid: ' + register_result['txid'])
 
-def handle_select(msg):
+def handle_select(msg, rpc_connection):
     with open('dil.conf') as file:
         dil_conf = json.load(file)
     count = 0
     handle_list = []
+    balances = dil_balance(rpc_connection)
+    
     for i in dil_conf:
-        print(str(count) + ' | ' + i)
+        try:
+            print(str(count) + ' | ' + i + ' balance:' + str(balances[i]))
+        except:
+            print(str(count) + ' | ' + i + ' balance:0')
         handle_list.append(i)
         count += 1
     handle_entry = user_inputInt(0,len(dil_conf)-1, msg)
@@ -917,7 +922,7 @@ def dil_send(chain, rpc_connection):
             return('Error: failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
 
         # FIXME add a warning here if normal_pubkey is not own by current wallet
-        handle_entry = handle_select("Select handle to deposit coins to: ")
+        handle_entry = handle_select("Select handle to deposit coins to: ", rpc_connection)
         print('handle_e', handle_entry)
         handle = dil_conf[handle_entry]['handle']
         pubtxid = dil_conf[handle_entry]['txid']
@@ -954,7 +959,10 @@ def dil_spend(chain, rpc_connection):
         return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
 
 
-    handle = handle_select('\nPlease select handle to send from: ')
+    handle = handle_select('\nPlease select handle to send from: ', rpc_connection)
+    utxo_list = dil_listunspent(chain, rpc_connection)[handle]
+    if not utxo_list:
+        return('Error: can\'t find q utxo for selected handle. You must send t -> q first.')
     user_address = input('Please input an R address to send coins to: ')
     try:
         address_check = addr_convert('3c', user_address)
@@ -962,9 +970,7 @@ def dil_spend(chain, rpc_connection):
         return('Error: invalid address ' + str(e))
 
     if address_check != user_address:
-        print('Error: Wrong address format, must use an R address')
-
-    utxo_list = dil_listunspent(chain, rpc_connection)[handle]
+        return('Error: Wrong address format, must use an R address')
     count = 0 
     for i in utxo_list:
         print(str(count) + ' | ' + str(i))
@@ -1001,7 +1007,7 @@ def dil_Qsend(chain, rpc_connection):
       #  print(str(count) + ' | ' + i['handle'])
        # count += 1
         # FIXME add a warning here if normal_pubkey is not own by current wallet
-    handle_entry = handle_select("Select handle to send coins from: ") 
+    handle_entry = handle_select("Select handle to send coins from: ", rpc_connection) 
     destpubtxid = input('Please input register txid to send coins to: ')
     send_amount = input('Please specify amount to send: ')
     params.append(dil_conf[handle_entry]['txid'])
@@ -1012,7 +1018,7 @@ def dil_Qsend(chain, rpc_connection):
     return(str(result))
 
 
-def dil_balance(chain, rpc_connection):
+def dil_balance(rpc_connection):
     CC_address = rpc_connection.cclibaddress('19')
     address_dict = {}
     address_dict['addresses'] = [CC_address['myCCaddress']]
@@ -1063,8 +1069,4 @@ def dil_balance(chain, rpc_connection):
             final_balances[registered[txid]] = balances[txid] / 100000000
         else:
             final_balances[txid] = balances[txid] / 100000000
-    result_string = ''
-    for i in final_balances:
-        result_string += str(i) + ': '
-        result_string += str(final_balances[i]) + '\n'
-    return(result_string)
+    return(final_balances)
