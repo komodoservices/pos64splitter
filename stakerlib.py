@@ -945,7 +945,7 @@ def dil_send(chain, rpc_connection):
     result = dil_wrap('send', params, rpc_connection)
     # FIXME log all sends to dil.log 
     if 'error' in result:
-        return('Error: dilthium send broadcast failed with ' + str(result['errpr']))
+        return('Error: dilthium send broadcast failed with ' + str(result['error']))
     rawhex = result['hex']
     txid = rpc_connection.sendrawtransaction(rawhex)
     return('Success! Sent ' + str(send_amount) + ' to ' + handle + '(' + pubtxid + ')' +
