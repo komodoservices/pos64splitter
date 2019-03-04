@@ -1030,7 +1030,7 @@ def dil_Qsend(chain, rpc_connection):
 
 # endian flip a string
 def endian_flip(string):
-    ba = bytearray.fromhex(lilend)
+    ba = bytearray.fromhex(string)
     ba.reverse()
     flipped = ''.join(format(x, '02x') for x in ba)
     return(flipped)
