@@ -871,6 +871,8 @@ def decode_dil_send(txid, rpc_connection):
         register_txid = ''.join(format(x, '02x') for x in ba)[:64]
         return(register_txid)
     else:
+        print(decode)
+        input('cwewccwec')
         return()
 
 def dil_listunspent(chain, rpc_connection):
@@ -942,6 +944,8 @@ def dil_send(chain, rpc_connection):
     params.append(send_amount)
     result = dil_wrap('send', params, rpc_connection)
     # FIXME log all sends to dil.log 
+    if 'error' in result:
+        return('Error: dilthium send broadcast failed with ' + str(result['errpr']))
     rawhex = result['hex']
     txid = rpc_connection.sendrawtransaction(rawhex)
     return('Success! Sent ' + str(send_amount) + ' to ' + handle + '(' + pubtxid + ')' +
@@ -1024,6 +1028,14 @@ def dil_Qsend(chain, rpc_connection):
     return(str(result))
 
 
+# endian flip a string
+def endian_flip(string):
+    ba = bytearray.fromhex(lilend)
+    ba.reverse()
+    flipped = ''.join(format(x, '02x') for x in ba)
+    return(flipped)
+
+
 def dil_balance(rpc_connection):
     CC_address = rpc_connection.cclibaddress('19')
     address_dict = {}
@@ -1046,14 +1058,16 @@ def dil_balance(rpc_connection):
                 if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'x': # FIXME add other eval codes
                     #print(tx['vout'][-1]['scriptPubKey']['hex'])
                     lilend = tx['vout'][-1]['scriptPubKey']['hex']
-                    ba = bytearray.fromhex(lilend)
-                    ba.reverse()
-                    register_txid = ''.join(format(x, '02x') for x in ba)[:64]
+                    register_txid = endian_flip(lilend)[:64]
                     register_txids.append(register_txid)
                     if register_txid in balances:
                         balances[register_txid] += tx['vout'][0]['valueSat']
                     else:
                         balances[register_txid] = tx['vout'][0]['valueSat']
+                elif decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'Q':
+                    print(tx['vout'][-1]['scriptPubKey']['hex'])                    
+                    input('errerbbtrb')
+                    
 
     try:
         with open('dil.conf') as file:
