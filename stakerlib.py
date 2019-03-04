@@ -773,14 +773,9 @@ def dil_wrap(method, params, rpc_connection):
 # FIXME check if handle exists, right now it overwrites if same name is used twice
 # {'evalcode': 19, 'funcid': 'R', 'name': 'dilithium', 'method': 'register', 'help': 'handle, [hexseed]', 'params_required': 1, 'params_max': 2}
 def dil_register(chain, rpc_connection):
-    if os.path.isfile('dil.conf'):
-        user_yn = input('You have already registered. ' + 
-                        'Would you like to create another handle?(y/n): ')
-        if not user_yn.startswith('y'):
-            return('Exited')
 
     # create dummy conf is one does not exist
-    else:
+    if not os.path.isfile('dil.conf'):
         with open('dil.conf', "w") as f:
             json.dump({}, f)
 
