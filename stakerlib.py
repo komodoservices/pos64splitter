@@ -499,6 +499,8 @@ def start_daemon(chain, no_pk):
             mypubkey = list_json[0][1]
         pubkey = '-pubkey=' + mypubkey
         param_list.append(pubkey)
+    print(params)
+    input('cwew')
     for i in params:
        if i == 'addnode':
            for ip in params[i]:
@@ -766,6 +768,8 @@ def dil_wrap(method, params, rpc_connection):
     rpc_result = rpc_connection.cclib(method, '19', wrapped)
     return(rpc_result)
 
+
+# FIXME check if handle exists, right now it overwrites if same name is used twice
 # {'evalcode': 19, 'funcid': 'R', 'name': 'dilithium', 'method': 'register', 'help': 'handle, [hexseed]', 'params_required': 1, 'params_max': 2}
 def dil_register(chain, rpc_connection):
     if os.path.isfile('dil.conf'):
@@ -824,6 +828,8 @@ def dil_register(chain, rpc_connection):
     return('Success!\npkaddr: ' + register_result['pkaddr'] + 
            '\nskaddr: ' + register_result['skaddr'] + '\ntxid: ' + register_result['txid'])
 
+
+# ask user to select a handle from dil.conf, outputs selected handled
 def handle_select(msg, rpc_connection, show_balance):
     with open('dil.conf') as file:
         dil_conf = json.load(file)
@@ -904,7 +910,8 @@ def dil_listunspent(chain, rpc_connection):
                     register_txids.append(register_txid)
                     for handle in dil_conf:
                         if decode_dil_send(CC_txid, rpc_connection) == dil_conf[handle]['txid']:
-                            result_dict[handle].append({'txid': CC_txid, 'value': tx['vout'][0]['value']})
+                            txid_dict = {'txid': CC_txid, 'value': tx['vout'][0]['value']}
+                            result_dict[handle].append(txid_dict)
 
     return(result_dict)
 
