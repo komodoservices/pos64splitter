@@ -499,8 +499,9 @@ def start_daemon(chain, no_pk):
             mypubkey = list_json[0][1]
         pubkey = '-pubkey=' + mypubkey
         param_list.append(pubkey)
-    print(params)
-    input('cwew')
+    if not params:
+        print('Please move or copy komodod to this directory.')
+        sys.exit(0)
     for i in params:
        if i == 'addnode':
            for ip in params[i]:
