@@ -767,7 +767,6 @@ def dil_wrap(method, params, rpc_connection):
         wrapped = '\"[%22' + str(params[0]) + '%22,%22' + str(params[1]) + '%22,' + str(params[2]) + ']\"'
     elif method == 'Qsend':
         wrapped = '\"[%22' + str(params[0]) + '%22,%22' + str(params[1]) + '%22,%22' + str(params[2]) + '%22,' + str(params[3]) + ']\"'
-    print(method, '19', wrapped)
     rpc_result = rpc_connection.cclib(method, '19', wrapped)
     return(rpc_result)
 
@@ -869,7 +868,7 @@ def decode_dil_send(txid, rpc_connection):
     ba = bytearray.fromhex(scriptPubKey)
     ba.reverse()
     decode = rpc_connection.decodeccopret(scriptPubKey)
-    if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'x': # FIXME add other eval codes
+    if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'x':
         register_txid = ''.join(format(x, '02x') for x in ba)[:64]
         return(register_txid)
         
@@ -1035,8 +1034,11 @@ def dil_Qsend(chain, rpc_connection):
     params.append(destpubtxid)
     params.append(send_amount)
     result = dil_wrap('Qsend', params, rpc_connection) # FIXME this is failing if you do it without waiting for confs
-    if result['result'] != 'success':
-        return('Error: Qsend failed with: ' + result['error'])
+    try:
+        if result['result'] != 'success':
+            return('Error: Qsend failed with: ' + result['error'])
+    except Exception as e:
+        return('Error: Qsend rpc rpc command fail with: ' + str(e) + ' ' + result)
     try:
         rawtx = result['hex']
     except Exception as e:
