@@ -1038,7 +1038,7 @@ def dil_Qsend(chain, rpc_connection):
         if result['result'] != 'success':
             return('Error: Qsend failed with: ' + result['error'])
     except Exception as e:
-        return('Error: Qsend rpc rpc command fail with: ' + str(e) + ' ' + result)
+        return('Error: Qsend rpc rpc command fail with: ' + str(e) + ' ' + str(result))
     try:
         rawtx = result['hex']
     except Exception as e:
