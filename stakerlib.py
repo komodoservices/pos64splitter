@@ -894,7 +894,7 @@ def dil_listunspent(rpc_connection):
     result_dict = {}
     for i in dil_conf:
         result_dict[i] = []
-    print('UTXOS', CC_utxos)
+
     for CC_txid in CC_utxos:
         tx = rpc_connection.getrawtransaction(CC_txid, 1)
         if tx['vout'][-1]['scriptPubKey']['type'] == 'nulldata':
@@ -913,20 +913,16 @@ def dil_listunspent(rpc_connection):
 
             if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'Q':
                 for handle in dil_conf:
-                    print('\ncctxid',CC_txid)
-                    print('vout -2',bigend_OP[:64])
-                    print('handle txid',dil_conf[handle]['txid'])
-                    print('vout -3',bigend_OP[64:128])
+                    #print('\ncctxid',CC_txid)
+                    #print('vout -2',bigend_OP[:64])
+                    p#rint('handle txid',dil_conf[handle]['txid'])
+                    p#rint('vout -3',bigend_OP[64:128])
                     if dil_conf[handle]['txid'] == bigend_OP[:64]:# FIXME can't hardcode these, need to think of a better solution for multi vout Qsends
-                        print('append vout 1', bigend_OP[:64])
                         txid_dict = {'txid': CC_txid, 'value': tx['vout'][-2]['value'], 'vout': 1}
                         result_dict[handle].append(txid_dict)
                     elif dil_conf[handle]['txid'] == bigend_OP[64:128]:
-                        print('append vout 0', bigend_OP[64:128])
                         txid_dict = {'txid': CC_txid, 'value': tx['vout'][-3]['value'], 'vout': 0}
                         result_dict[handle].append(txid_dict)
-    print(result_dict)
-    input('5555')
     return(result_dict)
 
 
