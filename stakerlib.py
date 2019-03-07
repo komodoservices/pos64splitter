@@ -908,7 +908,7 @@ def dil_listunspent(rpc_connection):
                 register_txids.append(register_txid)
                 for handle in dil_conf:
                     if decode_dil_send(CC_txid, rpc_connection) == dil_conf[handle]['txid']:
-                        txid_dict = {'txid': CC_txid, 'value': tx['vout'][0]['value'], 'vout': 0} #FIXME check if this send is always vout 0
+                        txid_dict = {'txid': CC_txid, 'value': tx['vout'][0]['value'], 'vout': 0, 'funcid': 'x'} #FIXME check if this send is always vout 0
                         result_dict[handle].append(txid_dict)
 
             if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'Q':
@@ -918,10 +918,10 @@ def dil_listunspent(rpc_connection):
                     #print('handle txid',dil_conf[handle]['txid'])
                     #print('vout -3',bigend_OP[64:128])
                     if dil_conf[handle]['txid'] == bigend_OP[:64]:# FIXME can't hardcode these, need to think of a better solution for multi vout Qsends
-                        txid_dict = {'txid': CC_txid, 'value': tx['vout'][-2]['value'], 'vout': 1}
+                        txid_dict = {'txid': CC_txid, 'value': tx['vout'][-2]['value'], 'vout': 1, 'funcid': 'Q'}
                         result_dict[handle].append(txid_dict)
                     elif dil_conf[handle]['txid'] == bigend_OP[64:128]:
-                        txid_dict = {'txid': CC_txid, 'value': tx['vout'][-3]['value'], 'vout': 0}
+                        txid_dict = {'txid': CC_txid, 'value': tx['vout'][-3]['value'], 'vout': 0, 'funcid': 'Q'}
                         result_dict[handle].append(txid_dict)
     return(result_dict)
 
@@ -975,7 +975,7 @@ def dil_spend(chain, rpc_connection):
 
 
     handle = handle_select('\nPlease select handle to send from: ', rpc_connection, 1)
-    utxo_list = dil_listunspent(chain, rpc_connection)[handle]
+    utxo_list = dil_listunspent(rpc_connection)[handle]
     if not utxo_list:
         return('Error: can\'t find q utxo for selected handle. You must send t -> q first.')
     user_address = input('Please input an R address to send coins to: ')
@@ -996,10 +996,8 @@ def dil_spend(chain, rpc_connection):
     ScriptPubKey = rpc_connection.validateaddress(user_address)['scriptPubKey']
     params.append(ScriptPubKey)
     params.append(dil_conf[handle]['seed'])
-    print(params)
     result = dil_wrap('spend', params, rpc_connection)
-    print(result)
-    input('holllddd')
+
     try:
         rawhex = result['hex']
     except Exception as e:
