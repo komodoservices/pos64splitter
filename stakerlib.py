@@ -915,8 +915,8 @@ def dil_listunspent(rpc_connection):
                 for handle in dil_conf:
                     #print('\ncctxid',CC_txid)
                     #print('vout -2',bigend_OP[:64])
-                    p#rint('handle txid',dil_conf[handle]['txid'])
-                    p#rint('vout -3',bigend_OP[64:128])
+                    #print('handle txid',dil_conf[handle]['txid'])
+                    #print('vout -3',bigend_OP[64:128])
                     if dil_conf[handle]['txid'] == bigend_OP[:64]:# FIXME can't hardcode these, need to think of a better solution for multi vout Qsends
                         txid_dict = {'txid': CC_txid, 'value': tx['vout'][-2]['value'], 'vout': 1}
                         result_dict[handle].append(txid_dict)
