@@ -964,14 +964,6 @@ def dil_send(chain, rpc_connection):
     return('Success! Sent ' + str(send_amount) + ' to ' + handle + '(' + pubtxid + ')' +
            '\ntxid: ' + txid)
 
-# function to create a p2pkh scriptpubkey from arbitrary address
-def createraw_dummy(address, rpc_connection):
-    dummy_input = [{'txid': 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 'vout': 0}]
-    output = {address: 0.01}
-    createraw_result = rpc_connection.createrawtransaction(dummy_input, output)
-    decoderaw_result = rpc_connection.decoderawtransaction(createraw_result)
-    return(decoderaw_result['vout'][0]['scriptPubKey']['hex'])
-
 
 # {'evalcode': 19, 'funcid': 'y', 'name': 'dilithium', 'method': 'spend', 'help': 'sendtxid scriptPubKey [hexseed]', 'params_required': 2, 'params_max': 3}
 def dil_spend(chain, rpc_connection):
@@ -1001,7 +993,8 @@ def dil_spend(chain, rpc_connection):
     utxo = user_inputInt(0,len(utxo_list), '\nPlease select a q utxo to spend: ')
     params = []
     params.append(utxo_list[utxo]['txid'])
-    params.append(createraw_dummy(user_address, rpc_connection))
+    ScriptPubKey = rpc_connection.validateaddress(user_address)['scriptPubKey']
+    params.append(ScriptPubKey)
     params.append(dil_conf[handle]['seed'])
     print(params)
     result = dil_wrap('spend', params, rpc_connection)
