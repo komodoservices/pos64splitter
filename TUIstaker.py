@@ -226,7 +226,7 @@ def dil_loop(chain, msg):
             msg = stakerlib.dil_balance(rpc_connection)
             dil_loop(chain, msg)
         elif int(selection) == 7:
-            msg = stakerlib.dil_listunspent(chain, rpc_connection)
+            msg = stakerlib.dil_listunspent(rpc_connection)
             dil_loop(chain, msg)
         else:
             print('BUG!')

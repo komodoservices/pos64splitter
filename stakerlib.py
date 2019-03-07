@@ -872,34 +872,9 @@ def decode_dil_send(txid, rpc_connection):
     if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'x': # FIXME add other eval codes
         register_txid = ''.join(format(x, '02x') for x in ba)[:64]
         return(register_txid)
-
-
-def decode_dil_Qsend(txid, rpc_connection):
-    CC_address = rpc_connection.cclibaddress('19')['myCCaddress']
-    getrawtx_result = rpc_connection.getrawtransaction(txid, 2)
-    scriptPubKey = getrawtx_result['vout'][-1]['scriptPubKey']['hex']
-    op_return = endian_flip(scriptPubKey)
-    decode_result = rpc_connection.decodeccopret(scriptPubKey)
-
-    if decode_result['OpRets'][0]['eval_code'] == '0x13' and decode_result['OpRets'][0]['function'] == 'Q':
-        for vout in getrawtx_result['vout']:
-            try:
-                #print('vfefewf',vout)
-                if vout['scriptPubKey']['addresses'][0] == CC_address['myCCaddress']:
-                    print(vout)
-                    print(scriptPubkey)
-            except Exception as e:
-                print(e)
-        #print(op_return)
-        print('\nvout -2 dil change output',op_return[:64])
-        print(getrawtx_result['vout'][-2])
-        print('\nvout -3 payment to recipient', op_return[64:128])
-        print(getrawtx_result['vout'][-3])
-        print('register_txid input',op_return[-76:-12])
-        print('txid',txid)
         
 
-def dil_listunspent(chain, rpc_connection):
+def dil_listunspent(rpc_connection):
     try:
         with open('dil.conf') as f:
             dil_conf = json.load(f)
@@ -1031,11 +1006,14 @@ def dil_spend(chain, rpc_connection):
     params.append(utxo_list[utxo]['txid'])
     params.append(createraw_dummy(user_address, rpc_connection))
     params.append(dil_conf[handle]['seed'])
+    print(params)
     result = dil_wrap('spend', params, rpc_connection)
+    print(result)
+    input('holllddd')
     try:
         rawhex = result['hex']
     except Exception as e:
-        return('Error: dilthium spend rpc failed with: ' + str(e))
+        return('Error: dilthium spend rpc failed with: ' + result['error'])
     try:
         txid = rpc_connection.sendrawtransaction(rawhex)
     except Exception as e:
@@ -1051,8 +1029,8 @@ def dil_Qsend(chain, rpc_connection):
             dil_conf = json.load(f)
     except Exception as e:
         return('Error: failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
+
     params = []
-    count = 0
 
     # FIXME add a warning here if normal_pubkey is not own by current wallet
     handle_entry = handle_select("Select handle to send coins from: ", rpc_connection, 1) 
@@ -1091,66 +1069,15 @@ def endian_flip(string):
 
 
 def dil_balance(rpc_connection):
-    CC_address = rpc_connection.cclibaddress('19')
-    address_dict = {}
-    address_dict['addresses'] = [CC_address['myCCaddress']]
+    listunspent_result = dil_listunspent(rpc_connection)
+    balance_dict = {}
+    for handle in listunspent_result:
+        for utxo in listunspent_result[handle]:
+            try:
+                print('what',utxo)
+                balance_dict[handle] += utxo['value']
+            except:
+                balance_dict[handle] = utxo['value']
 
-    CC_utxos = []
-    CC_txid_info = rpc_connection.getaddressutxos(address_dict)
-    for i in CC_txid_info:
-        CC_utxos.append(i['txid'])
-
-    balances = {}
-    register_txids = []
-
-    for CC_txid in CC_utxos:
-        tx = rpc_connection.getrawtransaction(CC_txid, 1)
-        for vout in tx['vout']:
-            if vout['scriptPubKey']['type'] == 'nulldata':
-                OP_hex = vout['scriptPubKey']['hex']
-                decode = rpc_connection.decodeccopret(OP_hex)
-                if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'x': # FIXME add other eval codes
-                    #print(tx['vout'][-1]['scriptPubKey']['hex'])
-                    lilend = tx['vout'][-1]['scriptPubKey']['hex']
-                    register_txid = endian_flip(lilend)[:64]
-                    register_txids.append(register_txid)
-                    if register_txid in balances:
-                        balances[register_txid] += tx['vout'][0]['valueSat']
-                    else:
-                        balances[register_txid] = tx['vout'][0]['valueSat']
-                elif decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'Q':
-                    #print(tx['vout'][-1]['scriptPubKey']['hex'])
-                    OP_ret = tx['vout'][-1]['scriptPubKey']['hex']
-                    for tx_vout in tx['vout']:
-                        try:
-                            if tx_vout['scriptPubKey']['addresses'] in addresses_dict:
-                                print(tx_vout['scriptPubKey']['addresses'][0])
-                        except Exception as e:
-                            pass
-
-                    
-                   
-                    
-
-    try:
-        with open('dil.conf') as file:
-            dil_conf = json.load(file)
-    except Exception as e:
-        return(balances) # FIXME divide by COIN
-
-    final_balances = {}
-    registered = {}
-
-    # if handle is saved in dil_conf, show handle in place of register txid
-    for handle in dil_conf:
-        register_txid = dil_conf[handle]['txid']
-        if dil_conf[handle]['txid'] in balances:
-            registered[register_txid] = handle
-
-    for txid in balances:
-        if txid in registered:
-            final_balances[registered[txid]] = balances[txid] / 100000000
-        else:
-            final_balances[txid] = balances[txid] / 100000000
-    return(final_balances)
+    return('balances:\n' + str(balance_dict))
 
