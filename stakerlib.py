@@ -896,6 +896,7 @@ def dil_listunspent(rpc_connection):
 
     for CC_txid in CC_utxos:
         tx = rpc_connection.getrawtransaction(CC_txid, 1)
+        height = tx['height']
         if tx['vout'][-1]['scriptPubKey']['type'] == 'nulldata':
             OP_hex = tx['vout'][-1]['scriptPubKey']['hex']
             decode = rpc_connection.decodeccopret(OP_hex)
@@ -907,20 +908,20 @@ def dil_listunspent(rpc_connection):
                 register_txids.append(register_txid)
                 for handle in dil_conf:
                     if decode_dil_send(CC_txid, rpc_connection) == dil_conf[handle]['txid']:
-                        txid_dict = {'txid': CC_txid, 'value': tx['vout'][0]['value'], 'vout': 0, 'funcid': 'x'} #FIXME check if this send is always vout 0
+                        txid_dict = {'txid': CC_txid, 'value': tx['vout'][0]['value'], 'vout': 0, 'funcid': 'x', 'height': height} #FIXME check if this send is always vout 0
                         result_dict[handle].append(txid_dict)
 
             if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'Q':
                 for handle in dil_conf:
-                    #print('\ncctxid',CC_txid)
+                    from_handle = handle_get(bigend_OP[-76:-12], rpc_connection)
                     #print('vout -2',bigend_OP[:64])
                     #print('handle txid',dil_conf[handle]['txid'])
                     #print('vout -3',bigend_OP[64:128])
                     if dil_conf[handle]['txid'] == bigend_OP[:64]:# FIXME can't hardcode these, need to think of a better solution for multi vout Qsends
-                        txid_dict = {'txid': CC_txid, 'value': tx['vout'][-2]['value'], 'vout': 1, 'funcid': 'Q'}
+                        txid_dict = {'txid': CC_txid, 'value': tx['vout'][-2]['value'], 'vout': 1, 'funcid': 'Q', 'height': height, 'received_from': from_handle}
                         result_dict[handle].append(txid_dict)
-                    elif dil_conf[handle]['txid'] == bigend_OP[64:128]:
-                        txid_dict = {'txid': CC_txid, 'value': tx['vout'][-3]['value'], 'vout': 0, 'funcid': 'Q'}
+                    if dil_conf[handle]['txid'] == bigend_OP[64:128]:
+                        txid_dict = {'txid': CC_txid, 'value': tx['vout'][-3]['value'], 'vout': 0, 'funcid': 'Q', 'height': height, 'received_from': from_handle}
                         result_dict[handle].append(txid_dict)
     return(result_dict)
 
@@ -1046,9 +1047,18 @@ def dil_Qsend(chain, rpc_connection):
     try:
         result_txid = rpc_connection.sendrawtransaction(rawtx)
     except Exception as e:
-        return('Error: Qsend broadcast failed with: ' + str(e))
+        return('Error: Qsend broadcast failed with: ' + str(e) + '\n' + rawtx)
     return('Success! ' + result_txid)
 
+
+# function to get handle from register txid
+def handle_get(register_txid, rpc_connection):
+    tx = rpc_connection.getrawtransaction(register_txid, 1)
+    OP_ret = tx['vout'][-1]['scriptPubKey']['hex']
+    byte_length = OP_ret[12:14]
+    byte_length_int = int(byte_length, 16)
+    x = (byte_length_int * 2) + 14
+    return(bytes.fromhex(OP_ret[14:x]).decode('utf-8'))
 
 # endian flip a string
 def endian_flip(string):
