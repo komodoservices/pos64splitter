@@ -903,12 +903,16 @@ def dil_listunspent(rpc_connection):
             bigend_OP = endian_flip(OP_hex)
             if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'x':
                 #print(tx['vout'][-1]['scriptPubKey']['hex'])
+                from_address = []
+                for vin in tx['vin']:
+                    if not vin['address'] in from_address:
+                        from_address.append(vin['address'])
                 txids.append(CC_txid)
                 register_txid = decode_dil_send(CC_txid, rpc_connection)
                 register_txids.append(register_txid)
                 for handle in dil_conf:
                     if decode_dil_send(CC_txid, rpc_connection) == dil_conf[handle]['txid']:
-                        txid_dict = {'txid': CC_txid, 'value': tx['vout'][0]['value'], 'vout': 0, 'funcid': 'x', 'height': height} #FIXME check if this send is always vout 0
+                        txid_dict = {'txid': CC_txid, 'value': tx['vout'][0]['value'], 'vout': 0, 'funcid': 'x', 'height': height, 'received_from': from_address} #FIXME check if this send is always vout 0
                         result_dict[handle].append(txid_dict)
 
             if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'Q':
@@ -1059,6 +1063,7 @@ def handle_get(register_txid, rpc_connection):
     byte_length_int = int(byte_length, 16)
     x = (byte_length_int * 2) + 14
     return(bytes.fromhex(OP_ret[14:x]).decode('utf-8'))
+
 
 # endian flip a string
 def endian_flip(string):
