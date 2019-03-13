@@ -918,14 +918,9 @@ def dil_listunspent(rpc_connection):
             if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'Q':
                 for handle in dil_conf:
                     from_handle = handle_get(bigend_OP[-76:-12], rpc_connection)
-                    #print('vout -2',bigend_OP[:64])
-                    #print('handle txid',dil_conf[handle]['txid'])
-                    #print('vout -3',bigend_OP[64:128])
-                    if dil_conf[handle]['txid'] == bigend_OP[:64] and CC_utxo['outputIndex'] == 1:# FIXME can't hardcode these, need to think of a better solution for multi vout Qsends
-                        txid_dict = {'txid': CC_utxo['txid'], 'value': tx['vout'][-2]['value'], 'vout': CC_utxo['outputIndex'], 'funcid': 'Q', 'height': height, 'received_from': from_handle}
-                        result_dict[handle].append(txid_dict)
-                    if dil_conf[handle]['txid'] == bigend_OP[64:128] and CC_utxo['outputIndex'] == 0:
-                        txid_dict = {'txid': CC_utxo['txid'], 'value': tx['vout'][-3]['value'], 'vout': CC_utxo['outputIndex'], 'funcid': 'Q', 'height': height, 'received_from': from_handle}
+                    OP_slice = re.findall('.{1,64}', bigend_OP)
+                    if dil_conf[handle]['txid'] in OP_slice:
+                        txid_dict = {'txid': CC_utxo['txid'], 'value': tx['vout'][CC_utxo['outputIndex']]['value'], 'vout': CC_utxo['outputIndex'], 'funcid': 'Q', 'height': height, 'received_from': from_handle}
                         result_dict[handle].append(txid_dict)
     return(result_dict)
 
