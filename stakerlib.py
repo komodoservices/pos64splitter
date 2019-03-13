@@ -885,17 +885,17 @@ def dil_listunspent(rpc_connection):
     address_dict['addresses'] = [CC_address['myCCaddress']]
     CC_utxos = []
     CC_txids = rpc_connection.getaddressutxos(address_dict)
-    for i in CC_txids:
-        if not i['txid'] in CC_utxos:
-            CC_utxos.append(i['txid'])
+    #for i in CC_txids:
+     #   if not i['txid'] in CC_utxos:
+      #      CC_utxos.append(i['txid'])
     register_txids = []
     txids = []
     result_dict = {}
     for i in dil_conf:
         result_dict[i] = []
 
-    for CC_txid in CC_utxos:
-        tx = rpc_connection.getrawtransaction(CC_txid, 1)
+    for CC_utxo in CC_txids:
+        tx = rpc_connection.getrawtransaction(CC_utxo['txid'], 1)
         height = tx['height']
         if tx['vout'][-1]['scriptPubKey']['type'] == 'nulldata':
             OP_hex = tx['vout'][-1]['scriptPubKey']['hex']
@@ -907,12 +907,12 @@ def dil_listunspent(rpc_connection):
                 for vin in tx['vin']:
                     if not vin['address'] in from_address:
                         from_address.append(vin['address'])
-                txids.append(CC_txid)
-                register_txid = decode_dil_send(CC_txid, rpc_connection)
+                txids.append(CC_utxo['txid'])
+                register_txid = decode_dil_send(CC_utxo['txid'], rpc_connection)
                 register_txids.append(register_txid)
                 for handle in dil_conf:
-                    if decode_dil_send(CC_txid, rpc_connection) == dil_conf[handle]['txid']:
-                        txid_dict = {'txid': CC_txid, 'value': tx['vout'][0]['value'], 'vout': 0, 'funcid': 'x', 'height': height, 'received_from': from_address} #FIXME check if this send is always vout 0
+                    if decode_dil_send(CC_utxo['txid'], rpc_connection) == dil_conf[handle]['txid']:
+                        txid_dict = {'txid': CC_utxo['txid'], 'value': tx['vout'][0]['value'], 'vout': CC_utxo['outputIndex'], 'funcid': 'x', 'height': height, 'received_from': from_address} #FIXME check if this send is always vout 0
                         result_dict[handle].append(txid_dict)
 
             if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'Q':
@@ -921,11 +921,11 @@ def dil_listunspent(rpc_connection):
                     #print('vout -2',bigend_OP[:64])
                     #print('handle txid',dil_conf[handle]['txid'])
                     #print('vout -3',bigend_OP[64:128])
-                    if dil_conf[handle]['txid'] == bigend_OP[:64]:# FIXME can't hardcode these, need to think of a better solution for multi vout Qsends
-                        txid_dict = {'txid': CC_txid, 'value': tx['vout'][-2]['value'], 'vout': 1, 'funcid': 'Q', 'height': height, 'received_from': from_handle}
+                    if dil_conf[handle]['txid'] == bigend_OP[:64] and CC_utxo['outputIndex'] == 1:# FIXME can't hardcode these, need to think of a better solution for multi vout Qsends
+                        txid_dict = {'txid': CC_utxo['txid'], 'value': tx['vout'][-2]['value'], 'vout': CC_utxo['outputIndex'], 'funcid': 'Q', 'height': height, 'received_from': from_handle}
                         result_dict[handle].append(txid_dict)
-                    if dil_conf[handle]['txid'] == bigend_OP[64:128]:
-                        txid_dict = {'txid': CC_txid, 'value': tx['vout'][-3]['value'], 'vout': 0, 'funcid': 'Q', 'height': height, 'received_from': from_handle}
+                    if dil_conf[handle]['txid'] == bigend_OP[64:128] and CC_utxo['outputIndex'] == 0:
+                        txid_dict = {'txid': CC_utxo['txid'], 'value': tx['vout'][-3]['value'], 'vout': CC_utxo['outputIndex'], 'funcid': 'Q', 'height': height, 'received_from': from_handle}
                         result_dict[handle].append(txid_dict)
     return(result_dict)
 
