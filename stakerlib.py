@@ -1012,6 +1012,48 @@ def dil_spend(chain, rpc_connection):
         return('Error: broadcasting spend tx failed with: ' + str(e))
     return('Success! ' + txid)
 
+# cclib Qsend 19 \"[%22mypubtxid%22,%22<hexseed>%22,%22<destpubtxid>%22,0.777,%22<destpubtxid>%22,0.777,%22<destpubtxid>%22,0.777,%22<destpubtxid>%22,0.777]\"
+# {'evalcode': 19, 'funcid': 'Q', 'name': 'dilithium', 'method': 'Qsend', 'help': "mypubtxid hexseed/'mypriv' destpubtxid,amount, ...", 'params_required': 4, 'params_max': 66}
+def dil_Qsendmany(chain, rpc_connection):
+    try:
+        with open('dil.conf') as f:
+            dil_conf = json.load(f)
+    except Exception as e:
+        return('Error: failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
+
+    handle_entry = handle_select("Select handle to send coins from: ", rpc_connection, 1) 
+    output_length = user_inputInt(0,63, 'Please specify amount of outputs[0-63]: ')
+    outputs = []
+    for i in range(output_length):
+        dum_dict = {}
+        user_output = input('Please specify a dilithium handle or R address for output ' + str(i) + ': ')
+        user_amount = input('Please specify amount to send to ' + user_output + ': ')
+        try:
+            user_output_check = addr_convert('3c', user_output)
+            if user_output_check != user_output:
+                return('Error: Wrong address prefix format, must use R address')
+            destination = rpc_connection.validateaddress(user_output)['scriptPubKey']
+        except Exception as y:
+            try:
+                destination = dil_wrap('handleinfo', user_output, rpc_connection)['destpubtxid']
+            except Exception as e:
+                return('Error: Handle not found or invalid R address ' + user_output)
+                
+        dum_dict['dest'] = destination
+        dum_dict['amount'] = user_amount
+        outputs.append(dum_dict)
+    wrapped = '\"[\"' + dil_conf[handle_entry]['txid'] + '\",\"' + dil_conf[handle_entry]['seed'] + '\",\"'
+    print(wrapped)
+    for i in outputs[:-1]:
+        wrapped = wrapped + i['dest'] + '\",\"' + i['amount'] + '\",\"'
+    wrapped = wrapped + outputs[-1]['dest'] + '\",\"' + outputs[-1]['amount'] + '\"]\"'
+    Qsend_result = rpc_connection.cclib('Qsend', '19', wrapped)
+    try:
+        rawhex = Qsend_result['hex']
+    except Exception as e:
+        return('Error: Qsend method failed with error: ' + str(Qsend_result['error']))
+    return(Qsend_result)
+
 
 # cclib Qsend 19 \"[%22mypubtxid%22,%22<hexseed>%22,%22<destpubtxid>%22,0.777]\"
 # {'evalcode': 19, 'funcid': 'Q', 'name': 'dilithium', 'method': 'Qsend', 'help': "mypubtxid hexseed/'mypriv' destpubtxid,amount, ...", 'params_required': 4, 'params_max': 66}
