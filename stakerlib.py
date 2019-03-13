@@ -1052,7 +1052,16 @@ def dil_Qsendmany(chain, rpc_connection):
         rawhex = Qsend_result['hex']
     except Exception as e:
         return('Error: Qsend method failed with error: ' + str(Qsend_result['error']))
-    return(Qsend_result)
+    # FIXME this should ask user to confirm amounts before sending
+    try:
+        decoderawtx_result = rpc_connection.decoderawtransaction(rawhex)
+    except Exception as e:
+        return('Error: Qsend method returned hex, but decode failed. Please report this to Alright.')
+        
+    #for vout in decoderawtx_result['vout'][:-1]:
+     #   print(vout)
+    txid = rpc_connection.sendrawtransaction(rawhex)
+    return('Success! txid: ' + txid)
 
 
 # cclib Qsend 19 \"[%22mypubtxid%22,%22<hexseed>%22,%22<destpubtxid>%22,0.777]\"
