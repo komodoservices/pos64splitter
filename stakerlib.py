@@ -882,7 +882,7 @@ def dil_listunspent(rpc_connection):
 
     CC_address = rpc_connection.cclibaddress('19')
     address_dict = {}
-    address_dict['addresses'] = [CC_address['myCCaddress']]
+    address_dict['addresses'] = [CC_address['myCCAddress(CClib)']]
     CC_utxos = []
     CC_txids = rpc_connection.getaddressutxos(address_dict)
     #for i in CC_txids:
@@ -894,7 +894,7 @@ def dil_listunspent(rpc_connection):
     for i in dil_conf:
         result_dict[i] = []
 
-    for CC_utxo in CC_txids:
+    for CC_utxo in CC_txids:        
         tx = rpc_connection.getrawtransaction(CC_utxo['txid'], 1)
         height = tx['height']
         if tx['vout'][-1]['scriptPubKey']['type'] == 'nulldata':
@@ -919,8 +919,8 @@ def dil_listunspent(rpc_connection):
                 for handle in dil_conf:
                     from_handle = handle_get(bigend_OP[-76:-12], rpc_connection)
                     OP_slice = re.findall('.{1,64}', bigend_OP)
-                    if dil_conf[handle]['txid'] in OP_slice:
-                        txid_dict = {'txid': CC_utxo['txid'], 'value': tx['vout'][CC_utxo['outputIndex']]['value'], 'vout': CC_utxo['outputIndex'], 'funcid': 'Q', 'height': height, 'received_from': from_handle}
+                    if dil_conf[handle]['txid'] in OP_slice: # FIXME sloppy way of doing it I believe, seems to work though
+                        txid_dict = {'txid': CC_utxo['txid'], 'value': float(tx['vout'][CC_utxo['outputIndex']]['value']), 'vout': CC_utxo['outputIndex'], 'funcid': 'Q', 'height': height, 'received_from': from_handle}
                         result_dict[handle].append(txid_dict)
     return(result_dict)
 
@@ -1051,10 +1051,8 @@ def dil_Qsendmany(chain, rpc_connection):
     try:
         decoderawtx_result = rpc_connection.decoderawtransaction(rawhex)
     except Exception as e:
-        return('Error: Qsend method returned hex, but decode failed. Please report this to Alright.')
-        
-    #for vout in decoderawtx_result['vout'][:-1]:
-     #   print(vout)
+        return('Error: Qsend method returned hex, but decode failed. Please report this to Alright. ' + str(e))
+
     txid = rpc_connection.sendrawtransaction(rawhex)
     return('Success! txid: ' + txid)
 
