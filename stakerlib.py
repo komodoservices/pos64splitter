@@ -917,10 +917,11 @@ def dil_listunspent(rpc_connection):
                     raw_register_txids = bigend_OP[:64*vout_length]
                     register_txids = re.findall('.{1,64}', raw_register_txids)
                     if dil_conf[handle]['txid'] in register_txids:
-                        vout_pos = list_pos(register_txids, dil_conf[handle]['txid'])
-                        if vout_pos == CC_utxo['outputIndex']:
-                            txid_dict = {'txid': CC_utxo['txid'], 'value': tx['vout'][CC_utxo['outputIndex']]['valueSat'] / 100000000, 'vout': vout_pos, 'funcid': 'Q', 'height': height, 'received_from': from_handle}
-                            result_dict[handle].append(txid_dict)
+                        vout_positions = list_pos(register_txids, dil_conf[handle]['txid'])
+                        for i in vout_positions:
+                            if i == CC_utxo['outputIndex']:
+                                txid_dict = {'txid': CC_utxo['txid'], 'value': tx['vout'][CC_utxo['outputIndex']]['valueSat'] / 100000000, 'vout': i, 'funcid': 'Q', 'height': height, 'received_from': from_handle}
+                                result_dict[handle].append(txid_dict)
 
     return(result_dict)
 
@@ -1135,13 +1136,14 @@ def dil_balance(rpc_connection):
     return(balance_dict)
 
 
-# output string's position in a list given the list and string
+# output string's positions in a list given the list and string
 def list_pos(input_list, input_string):
     count = 0 
+    positions = []
     for i in input_list:
         if input_list[count] == input_string:
-            return(count)
-        else:
-            count += 1
+            positions.append(count)
+        count += 1
+    return(positions)
 
 
