@@ -1038,7 +1038,6 @@ def dil_Qsendmany(chain, rpc_connection):
         dum_dict['amount'] = user_amount
         outputs.append(dum_dict)
     wrapped = '\"[\"' + dil_conf[handle_entry]['txid'] + '\",\"' + dil_conf[handle_entry]['seed'] + '\",\"'
-    print(wrapped)
     for i in outputs[:-1]:
         wrapped = wrapped + i['dest'] + '\",\"' + i['amount'] + '\",\"'
     wrapped = wrapped + outputs[-1]['dest'] + '\",\"' + outputs[-1]['amount'] + '\"]\"'
@@ -1070,17 +1069,21 @@ def dil_Qsend(chain, rpc_connection):
 
     # FIXME add a warning here if normal_pubkey is not own by current wallet
     handle_entry = handle_select("Select handle to send coins from: ", rpc_connection, 1) 
-    send_to_handle = input('Please input a handle to send coins to: ')
-    
-    handleinfo_result = dil_wrap('handleinfo', send_to_handle, rpc_connection)
+    user_output = input('Please input a handle or R address to send coins to: ')
     try:
-        destpubtxid = handleinfo_result['destpubtxid']
-    except Exception as e:
-        return('Error: did not find handle ' + str(e))
+        user_output_check = addr_convert('3c', user_output)
+        if user_output_check != user_output:
+            return('Error: Wrong address prefix format, must use R address')
+        destination = rpc_connection.validateaddress(user_output)['scriptPubKey']
+    except Exception as y:
+        try:
+            destination = dil_wrap('handleinfo', user_output, rpc_connection)['destpubtxid']
+        except Exception as e:
+            return('Error: Handle not found or invalid R address ' + user_output)
     send_amount = input('Please specify amount to send: ')
     params.append(dil_conf[handle_entry]['txid'])
     params.append(dil_conf[handle_entry]['seed'])
-    params.append(destpubtxid)
+    params.append(destination)
     params.append(send_amount)
     result = dil_wrap('Qsend', params, rpc_connection) # FIXME this is failing if you do it without waiting for confs
     try:
