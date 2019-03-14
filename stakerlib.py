@@ -885,10 +885,6 @@ def dil_listunspent(rpc_connection):
     address_dict['addresses'] = [CC_address['myCCAddress(CClib)']]
     CC_utxos = []
     CC_txids = rpc_connection.getaddressutxos(address_dict)
-    #for i in CC_txids:
-     #   if not i['txid'] in CC_utxos:
-      #      CC_utxos.append(i['txid'])
-    register_txids = []
     txids = []
     result_dict = {}
     for i in dil_conf:
@@ -897,6 +893,7 @@ def dil_listunspent(rpc_connection):
     for CC_utxo in CC_txids:        
         tx = rpc_connection.getrawtransaction(CC_utxo['txid'], 1)
         height = tx['height']
+        vout_length = len(tx['vout']) - 1
         if tx['vout'][-1]['scriptPubKey']['type'] == 'nulldata':
             OP_hex = tx['vout'][-1]['scriptPubKey']['hex']
             decode = rpc_connection.decodeccopret(OP_hex)
@@ -909,7 +906,6 @@ def dil_listunspent(rpc_connection):
                         from_address.append(vin['address'])
                 txids.append(CC_utxo['txid'])
                 register_txid = decode_dil_send(CC_utxo['txid'], rpc_connection)
-                register_txids.append(register_txid)
                 for handle in dil_conf:
                     if decode_dil_send(CC_utxo['txid'], rpc_connection) == dil_conf[handle]['txid']:
                         txid_dict = {'txid': CC_utxo['txid'], 'value': tx['vout'][0]['valueSat'] / 100000000, 'vout': CC_utxo['outputIndex'], 'funcid': 'x', 'height': height, 'received_from': from_address} #FIXME check if this send is always vout 0
@@ -918,10 +914,14 @@ def dil_listunspent(rpc_connection):
             if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'Q':
                 for handle in dil_conf:
                     from_handle = handle_get(bigend_OP[-76:-12], rpc_connection)
-                    OP_slice = re.findall('.{1,64}', bigend_OP)
-                    if dil_conf[handle]['txid'] in OP_slice: # FIXME sloppy way of doing it I believe, seems to work though
-                        txid_dict = {'txid': CC_utxo['txid'], 'value': tx['vout'][CC_utxo['outputIndex']]['valueSat'] / 100000000, 'vout': CC_utxo['outputIndex'], 'funcid': 'Q', 'height': height, 'received_from': from_handle}
-                        result_dict[handle].append(txid_dict)
+                    raw_register_txids = bigend_OP[:64*vout_length]
+                    register_txids = re.findall('.{1,64}', raw_register_txids)
+                    if dil_conf[handle]['txid'] in register_txids:
+                        vout_pos = list_pos(register_txids, dil_conf[handle]['txid'])
+                        if vout_pos == CC_utxo['outputIndex']:
+                            txid_dict = {'txid': CC_utxo['txid'], 'value': tx['vout'][CC_utxo['outputIndex']]['valueSat'] / 100000000, 'vout': vout_pos, 'funcid': 'Q', 'height': height, 'received_from': from_handle}
+                            result_dict[handle].append(txid_dict)
+
     return(result_dict)
 
 
@@ -1133,4 +1133,15 @@ def dil_balance(rpc_connection):
         balance_dict[i] = balance_dict[i] / 100000000
 
     return(balance_dict)
+
+
+# output string's position in a list given the list and string
+def list_pos(input_list, input_string):
+    count = 0 
+    for i in input_list:
+        if input_list[count] == input_string:
+            return(count)
+        else:
+            count += 1
+
 
