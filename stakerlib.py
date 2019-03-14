@@ -912,7 +912,7 @@ def dil_listunspent(rpc_connection):
                 register_txids.append(register_txid)
                 for handle in dil_conf:
                     if decode_dil_send(CC_utxo['txid'], rpc_connection) == dil_conf[handle]['txid']:
-                        txid_dict = {'txid': CC_utxo['txid'], 'value': tx['vout'][0]['value'], 'vout': CC_utxo['outputIndex'], 'funcid': 'x', 'height': height, 'received_from': from_address} #FIXME check if this send is always vout 0
+                        txid_dict = {'txid': CC_utxo['txid'], 'value': tx['vout'][0]['valueSat'] / 100000000, 'vout': CC_utxo['outputIndex'], 'funcid': 'x', 'height': height, 'received_from': from_address} #FIXME check if this send is always vout 0
                         result_dict[handle].append(txid_dict)
 
             if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'Q':
@@ -920,7 +920,7 @@ def dil_listunspent(rpc_connection):
                     from_handle = handle_get(bigend_OP[-76:-12], rpc_connection)
                     OP_slice = re.findall('.{1,64}', bigend_OP)
                     if dil_conf[handle]['txid'] in OP_slice: # FIXME sloppy way of doing it I believe, seems to work though
-                        txid_dict = {'txid': CC_utxo['txid'], 'value': float(tx['vout'][CC_utxo['outputIndex']]['value']), 'vout': CC_utxo['outputIndex'], 'funcid': 'Q', 'height': height, 'received_from': from_handle}
+                        txid_dict = {'txid': CC_utxo['txid'], 'value': tx['vout'][CC_utxo['outputIndex']]['valueSat'] / 100000000, 'vout': CC_utxo['outputIndex'], 'funcid': 'Q', 'height': height, 'received_from': from_handle}
                         result_dict[handle].append(txid_dict)
     return(result_dict)
 
@@ -1123,9 +1123,11 @@ def dil_balance(rpc_connection):
     for handle in listunspent_result:
         for utxo in listunspent_result[handle]:
             try:
-                balance_dict[handle] += utxo['value']
+                balance_dict[handle] += utxo['value'] * 100000000
             except:
-                balance_dict[handle] = utxo['value']
+                balance_dict[handle] = utxo['value'] * 100000000
+    for i in balance_dict:
+        balance_dict[i] = balance_dict[i] / 100000000
 
     return(balance_dict)
 
