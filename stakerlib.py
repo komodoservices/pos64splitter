@@ -832,9 +832,9 @@ def handle_select(msg, rpc_connection, show_balance):
         dil_conf = json.load(file)
     count = 0
     handle_list = []
-    balances = dil_balance(rpc_connection)
     for i in dil_conf:
         if show_balance == 1: # FIXME this could definitely display balances in a better format
+            balances = dil_balance(rpc_connection)
             try:
                 print(str(count) + ' | ' + i + ' balance:' + str(balances[i]))
             except:
@@ -916,9 +916,15 @@ def dil_listunspent(rpc_connection):
                     from_handle = handle_get(bigend_OP[-76:-12], rpc_connection)
                     raw_register_txids = bigend_OP[:64*vout_length]
                     register_txids = re.findall('.{1,64}', raw_register_txids)
+                    register_txids.reverse()
                     if dil_conf[handle]['txid'] in register_txids:
                         vout_positions = list_pos(register_txids, dil_conf[handle]['txid'])
+                        print(vout_positions)
                         for i in vout_positions:
+                            print(tx['txid'])
+                            print(i)
+                            print(CC_utxo['outputIndex'])
+                            input('wat')
                             if i == CC_utxo['outputIndex']:
                                 txid_dict = {'txid': CC_utxo['txid'], 'value': tx['vout'][CC_utxo['outputIndex']]['valueSat'] / 100000000, 'vout': i, 'funcid': 'Q', 'height': height, 'received_from': from_handle}
                                 result_dict[handle].append(txid_dict)
