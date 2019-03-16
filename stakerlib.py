@@ -919,12 +919,7 @@ def dil_listunspent(rpc_connection):
                     register_txids.reverse()
                     if dil_conf[handle]['txid'] in register_txids:
                         vout_positions = list_pos(register_txids, dil_conf[handle]['txid'])
-                        print(vout_positions)
                         for i in vout_positions:
-                            print(tx['txid'])
-                            print(i)
-                            print(CC_utxo['outputIndex'])
-                            input('wat')
                             if i == CC_utxo['outputIndex']:
                                 txid_dict = {'txid': CC_utxo['txid'], 'value': tx['vout'][CC_utxo['outputIndex']]['valueSat'] / 100000000, 'vout': i, 'funcid': 'Q', 'height': height, 'received_from': from_handle}
                                 result_dict[handle].append(txid_dict)
