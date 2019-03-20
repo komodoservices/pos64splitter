@@ -9,7 +9,7 @@ In order for an assetchain to support it, the Dilithium cclib module must be act
 Throughout this document, we will use the test chain, MUSIG. Replace `MUSIG` with the relevant ticker for your chain in any `komodo-cli` commands. This is also a test chain for the Musig CC module. The Musig CC is an entirely seperate set of functionality. Do not conflate the two. Dilithium testing is being done on this chain as a matter of convenience for the developers and testers.
 `./komodod -ac_name=MUSIG -ac_supply=100000 -ac_reward=10000000 -ac_cclib=sudoku -ac_cc=2 -addnode=5.9.102.210 -addnode=195.201.20.230 -addnode=195.201.137.5`
 
-Please follow the guide here <FIXME link to manually building komodod guide>, if you have not done this already. Please note, that the process is different because we are using a custom cclib module that is not typically included in komodod unless komodod is explictily built for this module. Follow the above guide, when you get to the `build.sh` step, do this instead: 
+Please follow [this guide](https://docs.komodoplatform.com/komodo/install-Komodo-manually.html), if you have not done this already. Please note, that the process is different because we are using a custom cclib module that is not typically included in komodod unless komodod is explictily built for this module. Follow the above guide, when you get to the `build.sh` step, do this instead: 
 ```
 cd ~/komodo/src/cc
 ./makecclib
@@ -24,7 +24,7 @@ The general flow of the Dilithium CC is this.
 3. User can then send coins within the q pool(q->q) or send coins from the q pool back to a normal R address or p2sk address(q->t) with the Qsend command. 
 
 
-We will begin by going through the manual process of creating a handle, sending coins to this handle then sending coins from this handle. After going through the manual process, we will show some code examples of how this might be implemented into a UI. A TUI with Dilithium functionality can be found here <HERE FIXME>.
+We will begin by going through the manual process of creating a handle, sending coins to this handle then sending coins from this handle. After going through the manual process, we will show some code examples of how this might be implemented into a UI. A TUI with Dilithium functionality can be found [here](https://github.com/KMDLabs/pos64staker/tree/restart).
 
 Begin by setting `-pubkey=` in the launch parameters. 
 `komodo-cli -ac_name=MUSIG validateaddress $(komodo-cli -ac_name=MUSIG getnewaddress)`
@@ -1164,7 +1164,7 @@ Response:
 
 If we repeat the same process for the remining 'destpubtxid', `fc6c067ec1091ec0d57ab86812af85a8650b10c6f1f0b954fc8db8c0e877e2a9`. We find that the output is to the `new21` handle.
 
-We will need to repeat this process on each UTXO in the `getaddressesutxos` output. Please see the `dil_listunspent` function here <FIXME link to def dil_listunspent> for how you might do this in python3. 
+We will need to repeat this process on each UTXO in the `getaddressesutxos` output. Please see the `dil_listunspent` function [here](https://github.com/KMDLabs/pos64staker/blob/513d8bb0f18ee1a5011ea50e6e2aa766f01c5ad3/stakerlib.py#L876) for how you might do this in python3. 
 
 The output for this `dil_listunspent` python3 function for this given pubkey is
 ```
