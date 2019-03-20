@@ -18,7 +18,20 @@ import shutil
 import time
 import secrets
 import readline # FIXME not supported on windows
+import bitcoin
+from bitcoin.wallet import P2PKHBitcoinAddress
+from bitcoin.core import x
+from bitcoin.core import CoreMainParams
 from slickrpc import Proxy
+
+class CoinParams(CoreMainParams):
+    MESSAGE_START = b'\x24\xe9\x27\x64'
+    DEFAULT_PORT = 7770
+    BASE58_PREFIXES = {'PUBKEY_ADDR': 60,
+                       'SCRIPT_ADDR': 85,
+                       'SECRET_KEY': 188}
+
+bitcoin.params = CoinParams
 
 
 # define data dir
@@ -860,19 +873,19 @@ def list_handles():
     return(result_dict)
 
 
-# function to decode dil send OP_RETURN, returns register txid
+# function to decode dil send OP_RETURN, returns register txid / 'destpubtxid'
 def decode_dil_send(txid, rpc_connection):
     tx = rpc_connection.getrawtransaction(txid, 1)
     scriptPubKey = tx['vout'][-1]['scriptPubKey']['hex']
-    decode = rpc_connection.decodeccopret(scriptPubKey)
-    ba = bytearray.fromhex(scriptPubKey)
-    ba.reverse()
+    bigend_OP = endian_flip(scriptPubKey)
     decode = rpc_connection.decodeccopret(scriptPubKey)
     if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'x':
         register_txid = ''.join(format(x, '02x') for x in ba)[:64]
         return(register_txid)
         
 
+
+# Dilithium listunspent for handles saved in dil.conf
 def dil_listunspent(rpc_connection):
     try:
         with open('dil.conf') as f:
@@ -880,24 +893,30 @@ def dil_listunspent(rpc_connection):
     except Exception as e:
         return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
 
+    # get our CC address and our CC address's UTXOs
     CC_address = rpc_connection.cclibaddress('19')
     address_dict = {}
     address_dict['addresses'] = [CC_address['myCCAddress(CClib)']]
     CC_utxos = []
     CC_txids = rpc_connection.getaddressutxos(address_dict)
+
     txids = []
     result_dict = {}
     for i in dil_conf:
         result_dict[i] = []
 
+    # iterate over CC address UTXOs
     for CC_utxo in CC_txids:        
         tx = rpc_connection.getrawtransaction(CC_utxo['txid'], 1)
         height = tx['height']
-        vout_length = len(tx['vout']) - 1
+        
+        # check if UTXO has an OP_RETURN, decode OP_RETURN with decodeccopret rpc command 
         if tx['vout'][-1]['scriptPubKey']['type'] == 'nulldata':
             OP_hex = tx['vout'][-1]['scriptPubKey']['hex']
             decode = rpc_connection.decodeccopret(OP_hex)
             bigend_OP = endian_flip(OP_hex)
+
+            # check if UTXO is Dilithium 'send' command
             if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'x':
                 #print(tx['vout'][-1]['scriptPubKey']['hex'])
                 from_address = []
@@ -905,23 +924,45 @@ def dil_listunspent(rpc_connection):
                     if not vin['address'] in from_address:
                         from_address.append(vin['address'])
                 txids.append(CC_utxo['txid'])
+
+                # get the 'destpubtxid' of UTXO
                 register_txid = decode_dil_send(CC_utxo['txid'], rpc_connection)
+                # iterate over saved handles, if 'destpubtxid' matches, save UTXO to handle's list
                 for handle in dil_conf:
                     if decode_dil_send(CC_utxo['txid'], rpc_connection) == dil_conf[handle]['txid']:
-                        txid_dict = {'txid': CC_utxo['txid'], 'value': tx['vout'][0]['valueSat'] / 100000000, 'vout': CC_utxo['outputIndex'], 'funcid': 'x', 'height': height, 'received_from': from_address} #FIXME check if this send is always vout 0
+                        txid_dict = {'txid': CC_utxo['txid'],
+                                     'value': tx['vout'][0]['valueSat'] / 100000000,
+                                     'vout': CC_utxo['outputIndex'],
+                                     'funcid': 'x',
+                                     'height': height,
+                                     'received_from': from_address}
                         result_dict[handle].append(txid_dict)
 
+            # check if UTXO is Dilithium 'Qsend' command
             if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'Q':
                 for handle in dil_conf:
+                    # the 'destpubtxid' of sender will always be bigend_OP[-76:-12] for Qsend txs
                     from_handle = handle_get(bigend_OP[-76:-12], rpc_connection)
+                    # the beginning of bigend_OP will begin with 'destpubtxid' of each 
+                    # output or 32 null bytes if output is to a normal R address
+                    vout_length = len(tx['vout']) - 1
+                    # slice bigend_OP, regex 'destpubtxid' of each output
                     raw_register_txids = bigend_OP[:64*vout_length]
                     register_txids = re.findall('.{1,64}', raw_register_txids)
                     register_txids.reverse()
+
+                    # if a saved handle owns a CC address UTXO, save UTXO to handle's list
                     if dil_conf[handle]['txid'] in register_txids:
                         vout_positions = list_pos(register_txids, dil_conf[handle]['txid'])
                         for i in vout_positions:
                             if i == CC_utxo['outputIndex']:
-                                txid_dict = {'txid': CC_utxo['txid'], 'value': tx['vout'][CC_utxo['outputIndex']]['valueSat'] / 100000000, 'vout': i, 'funcid': 'Q', 'height': height, 'received_from': from_handle}
+                                value = tx['vout'][CC_utxo['outputIndex']]['valueSat'] / 100000000
+                                txid_dict = {'txid': CC_utxo['txid'],
+                                             'value': value,
+                                             'vout': i,
+                                             'funcid': 'Q',
+                                             'height': height,
+                                             'received_from': from_handle}
                                 result_dict[handle].append(txid_dict)
 
     return(result_dict)
@@ -965,49 +1006,6 @@ def dil_send(chain, rpc_connection):
     return('Success! Sent ' + str(send_amount) + ' to ' + handle + '(' + pubtxid + ')' +
            '\ntxid: ' + txid)
 
-
-# {'evalcode': 19, 'funcid': 'y', 'name': 'dilithium', 'method': 'spend', 'help': 'sendtxid scriptPubKey [hexseed]', 'params_required': 2, 'params_max': 3}
-def dil_spend(chain, rpc_connection):
-    try:
-        with open('dil.conf') as f:
-            dil_conf = json.load(f)
-    except Exception as e:
-        return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
-
-
-    handle = handle_select('\nPlease select handle to send from: ', rpc_connection, 1)
-    utxo_list = dil_listunspent(rpc_connection)[handle]
-    if not utxo_list:
-        return('Error: can\'t find q utxo for selected handle. You must send t -> q first.')
-    user_address = input('Please input an R address to send coins to: ')
-    try:
-        address_check = addr_convert('3c', user_address)
-    except Exception as e:
-        return('Error: invalid address ' + str(e))
-
-    if address_check != user_address:
-        return('Error: Wrong address format, must use an R address')
-    count = 0 
-    for i in utxo_list:
-        print(str(count) + ' | ' + str(i))
-        count += 1
-    utxo = user_inputInt(0,len(utxo_list), '\nPlease select a q utxo to spend: ')
-    params = []
-    params.append(utxo_list[utxo]['txid'])
-    ScriptPubKey = rpc_connection.validateaddress(user_address)['scriptPubKey']
-    params.append(ScriptPubKey)
-    params.append(dil_conf[handle]['seed'])
-    result = dil_wrap('spend', params, rpc_connection)
-
-    try:
-        rawhex = result['hex']
-    except Exception as e:
-        return('Error: dilthium spend rpc failed with: ' + result['error'])
-    try:
-        txid = rpc_connection.sendrawtransaction(rawhex)
-    except Exception as e:
-        return('Error: broadcasting spend tx failed with: ' + str(e))
-    return('Success! ' + txid)
 
 # cclib Qsend 19 \"[%22mypubtxid%22,%22<hexseed>%22,%22<destpubtxid>%22,0.777,%22<destpubtxid>%22,0.777,%22<destpubtxid>%22,0.777,%22<destpubtxid>%22,0.777]\"
 # {'evalcode': 19, 'funcid': 'Q', 'name': 'dilithium', 'method': 'Qsend', 'help': "mypubtxid hexseed/'mypriv' destpubtxid,amount, ...", 'params_required': 4, 'params_max': 66}
@@ -1147,4 +1145,33 @@ def list_pos(input_list, input_string):
         count += 1
     return(positions)
 
+# function to list dilithium handles asscoiated with an arbitary pubkey
+def dil_pubkey_handles(rpc_connection):
+    pubkey = input('Please specify a pubkey: ')
+    try:
+        pubkey_check = P2PKHBitcoinAddress.from_pubkey(x(pubkey))
+    except Exception as e:
+        return('Error: ' + str(e))
+
+    cclibaddress_result = rpc_connection.cclibaddress('19', pubkey)
+    CC_address = cclibaddress_result['PubkeyCCaddress(CClib)']
+    address_dict = {}
+    address_dict['addresses'] = [CC_address]
+    handle_list = []
+    CC_txids = rpc_connection.getaddresstxids(address_dict)
+    for txid in CC_txids:
+        tx = rpc_connection.getrawtransaction(txid, 2)
+        try:
+            OP_ret = tx['vout'][-1]['scriptPubKey']['hex']
+        except Exception as e:
+            print('no OP')
+        decode_result = rpc_connection.decodeccopret(OP_ret)
+        try:
+            if decode_result['OpRets'][0]['function'] == 'R':
+                handle_list.append(handle_get(txid, rpc_connection))
+        except:
+            print('not a CC OP_ret')
+    return(handle_list)
+        
+        
 
