@@ -745,7 +745,7 @@ def fetch_bootstrap(chain):
                 if member.mode != 448:
                     return('Error:file ' + member.name + ' has improper file permissions! Report this to Alright')
             else:
-                return('Error:file ' + member.name + ' has improper file permissions! Please report this to Alright2')
+                return('Error:file ' + member.name + ' has improper file permissions! Please report this to Alright')
         if member.name.startswith('blocks') or member.name.startswith('chainstate'):
             extract.append(member.name)
         else:
@@ -766,7 +766,8 @@ def fetch_bootstrap(chain):
     else:
         return('Success! Use the start a chain from assetchains.json option to start the daemon.')
 
-# cclib keypair 19 \"[%22rand%22]\"
+
+# wrapped for Dilithium rpc commands
 def dil_wrap(method, params, rpc_connection):
     if method == 'keypair':
         wrapped = '\"[%22rand%22]\"'
@@ -794,7 +795,7 @@ def dil_register(chain, rpc_connection):
             json.dump({}, f)
 
     user_input = input('please give an abitrary name to register with.' +
-                       'This will create a dilithium privkey that is ' +
+                       'This will create a dilithium keypair that is ' +
                        'tied to the current -pubkey: ')
     with open('dil.conf') as file:
         dil_conf = json.load(file)
@@ -877,27 +878,42 @@ def list_handles():
 def decode_dil_send(txid, rpc_connection):
     tx = rpc_connection.getrawtransaction(txid, 1)
     scriptPubKey = tx['vout'][-1]['scriptPubKey']['hex']
-    bigend_OP = endian_flip(scriptPubKey)
+    ba = bytearray.fromhex(endian_flip(scriptPubKey))
     decode = rpc_connection.decodeccopret(scriptPubKey)
     if decode['OpRets'][0]['eval_code'] == '0x13' and decode['OpRets'][0]['function'] == 'x':
         register_txid = ''.join(format(x, '02x') for x in ba)[:64]
         return(register_txid)
-        
 
 
 # Dilithium listunspent for handles saved in dil.conf
-def dil_listunspent(rpc_connection):
-    try:
-        with open('dil.conf') as f:
-            dil_conf = json.load(f)
-    except Exception as e:
-        return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
-
-    # get our CC address and our CC address's UTXOs
-    CC_address = rpc_connection.cclibaddress('19')
+def dil_listunspent(rpc_connection, mine):
     address_dict = {}
-    address_dict['addresses'] = [CC_address['myCCAddress(CClib)']]
-    CC_utxos = []
+    # use handles saved in dil.conf
+    if mine == 1:
+        try:
+            with open('dil.conf') as f:
+                dil_conf = json.load(f)
+        except Exception as e:
+            return('Error: verify failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
+        # get our CC address and our CC address's UTXOs
+        CC_address = rpc_connection.cclibaddress('19')['myCCAddress(CClib)']
+
+    # use a user specified handle
+    else:
+        u_input = input('Please specify a handle: ')
+        handleinfo_result = dil_wrap('handleinfo', u_input, rpc_connection)
+        try:
+            pubkey = handleinfo_result['pubkey']
+            destpubtxid = handleinfo_result['destpubtxid']
+        except:
+            return('Error: Handle not found')
+        CC_address = rpc_connection.cclibaddress('19', pubkey)['PubkeyCCaddress(CClib)']
+        dil_conf = {}
+        dil_conf[u_input] = {'txid': destpubtxid}
+        
+                
+
+    address_dict['addresses'] = [CC_address]
     CC_txids = rpc_connection.getaddressutxos(address_dict)
 
     txids = []
@@ -982,7 +998,8 @@ def dil_send(chain, rpc_connection):
             with open('dil.conf') as f:
                 dil_conf = json.load(f)
         except Exception as e:
-            return('Error: failed with: ' + str(e) + ' Please use the register command if you haven\'t already')
+            return('Error: failed with: ' + str(e) + 
+                   ' Please use the register command if you haven\'t already')
 
         # FIXME add a warning here if normal_pubkey is not own by current wallet
         handle_entry = handle_select("Select handle to deposit coins to: ", rpc_connection, 0)
@@ -1145,6 +1162,7 @@ def list_pos(input_list, input_string):
         count += 1
     return(positions)
 
+
 # function to list dilithium handles asscoiated with an arbitary pubkey
 def dil_pubkey_handles(rpc_connection):
     pubkey = input('Please specify a pubkey: ')
@@ -1164,14 +1182,12 @@ def dil_pubkey_handles(rpc_connection):
         try:
             OP_ret = tx['vout'][-1]['scriptPubKey']['hex']
         except Exception as e:
-            print('no OP')
+            break
         decode_result = rpc_connection.decodeccopret(OP_ret)
         try:
             if decode_result['OpRets'][0]['function'] == 'R':
                 handle_list.append(handle_get(txid, rpc_connection))
         except:
-            print('not a CC OP_ret')
+            break
     return(handle_list)
-        
-        
 

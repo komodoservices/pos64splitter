@@ -226,17 +226,27 @@ def dil_loop(chain, msg):
             msg = stakerlib.dil_balance(rpc_connection)
             dil_loop(chain, msg)
         elif int(selection) == 7:
-            msg = stakerlib.dil_listunspent(rpc_connection)
+            msg = stakerlib.dil_listunspent(rpc_connection, 1)
             dil_loop(chain, msg)
         elif int(selection) == 8:
             msg = stakerlib.dil_pubkey_handles(rpc_connection)
+            dil_loop(chain, msg)
+        elif int(selection) == 9:
+            msg = stakerlib.dil_listunspent(rpc_connection, 0)
             dil_loop(chain, msg)
         else:
             print('BUG!')
 
 chain_menu = ['sendmany64','RNDsendmany', 'genaddresses', 'importlist', 'withdraw', 'Start a new chain', 'Restart daemon with -blocknotify', 'stats', 'Dilithium']
 stats_menu = ['balance', 'UTXO count']
-dil_menu = ['List handles','Register a new handle', 'send t -> q', 'Qsend', 'Qsendmany', 'balances', 'q_listunspent', 'List handles for an arbitrary pubkey']
+dil_menu = ['List handles',
+            'Register a new handle', 
+            'send t -> q', 'Qsend', 
+            'Qsendmany', 
+            'balances', 
+            'q_listunspent', 
+            'List handles for an arbitrary pubkey',
+            'Get q_listunspent for an arbitary handle']
 os.system('clear')
 select_loop('')
 
