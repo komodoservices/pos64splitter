@@ -1170,7 +1170,7 @@ def dil_external_balance(rpc_connection):
     if str(result).startswith('Error'):
         return(result)
     for utxo in result[handle]:
-        balance_sat += utxo['value'] + 100000000
+        balance_sat += utxo['value'] * 100000000
     return(str(balance_sat / 100000000))
 
 
