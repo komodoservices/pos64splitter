@@ -229,16 +229,37 @@ def dil_loop(chain, msg):
             msg = stakerlib.dil_listunspent(rpc_connection, 1)
             dil_loop(chain, msg)
         elif int(selection) == 8:
-            msg = stakerlib.dil_pubkey_handles(rpc_connection)
-            dil_loop(chain, msg)
-        elif int(selection) == 9:
-            msg = stakerlib.dil_listunspent(rpc_connection, 0)
-            dil_loop(chain, msg)
-        elif int(selection) == 10:
-            msg = stakerlib.dil_external_balance(rpc_connection)
-            dil_loop(chain, msg)
+            dil_stats_loop(chain, 'Dilithium Stats Menu')
         else:
             print('BUG!')
+
+
+def dil_stats_loop(chain, msg):
+    os.system('clear')
+    try:    
+        rpc_connection = stakerlib.def_credentials(chain)
+        dummy = rpc_connection.getbalance() # test connection
+    except Exception as e:
+        os.system('clear')
+        print(e)
+        error = 'Error: Could not connect to daemon. ' + chain + ' is not running or rpc creds not found.'
+        select_loop(error)
+    while True:
+        os.system('clear')
+        print_menu(dil_stats_menu, chain, msg)
+        selection = stakerlib.user_inputInt(0,len(dil_stats_menu),"make a selection:")
+        if int(selection) == 0:
+            os.system('clear')
+            dil_loop(chain, 'Dilithium')
+        elif int(selection) == 1:
+            msg = stakerlib.dil_pubkey_handles(rpc_connection)
+            dil_stats_loop(chain, msg)
+        elif int(selection) == 2:
+            msg = stakerlib.dil_listunspent(rpc_connection, 0)
+            dil_stats_loop(chain, msg)
+        elif int(selection) == 3:
+            msg = stakerlib.dil_external_balance(rpc_connection)
+            dil_stats_loop(chain, msg)
 
 chain_menu = ['sendmany64','RNDsendmany', 'genaddresses', 'importlist', 'withdraw', 'Start a new chain', 'Restart daemon with -blocknotify', 'stats', 'Dilithium']
 stats_menu = ['balance', 'UTXO count']
@@ -248,9 +269,10 @@ dil_menu = ['List handles',
             'Qsendmany', 
             'balances', 
             'q_listunspent', 
-            'List handles for an arbitrary pubkey',
-            'Get q_listunspent for an arbitary handle',
-            'Get q balance for an arbitary handle']
+            'Dilithium stats']
+dil_stats_menu = ['List handles for an arbitrary pubkey',
+                  'Get q_listunspent for an arbitary handle',
+                  'Get q balance for an arbitary handle']
 os.system('clear')
 select_loop('')
 
