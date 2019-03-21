@@ -234,6 +234,9 @@ def dil_loop(chain, msg):
         elif int(selection) == 9:
             msg = stakerlib.dil_listunspent(rpc_connection, 0)
             dil_loop(chain, msg)
+        elif int(selection) == 10:
+            msg = stakerlib.dil_external_balance(rpc_connection)
+            dil_loop(chain, msg)
         else:
             print('BUG!')
 
@@ -246,7 +249,8 @@ dil_menu = ['List handles',
             'balances', 
             'q_listunspent', 
             'List handles for an arbitrary pubkey',
-            'Get q_listunspent for an arbitary handle']
+            'Get q_listunspent for an arbitary handle',
+            'Get q balance for an arbitary handle']
 os.system('clear')
 select_loop('')
 

@@ -899,7 +899,7 @@ def dil_listunspent(rpc_connection, mine):
         CC_address = rpc_connection.cclibaddress('19')['myCCAddress(CClib)']
 
     # use a user specified handle
-    else:
+    elif mine == 0:
         u_input = input('Please specify a handle: ')
         handleinfo_result = dil_wrap('handleinfo', u_input, rpc_connection)
         try:
@@ -910,8 +910,19 @@ def dil_listunspent(rpc_connection, mine):
         CC_address = rpc_connection.cclibaddress('19', pubkey)['PubkeyCCaddress(CClib)']
         dil_conf = {}
         dil_conf[u_input] = {'txid': destpubtxid}
+
+    # no user input, use arg 3 as handle
+    else:
+        handleinfo_result = dil_wrap('handleinfo', mine, rpc_connection)
+        try:
+            pubkey = handleinfo_result['pubkey']
+            destpubtxid = handleinfo_result['destpubtxid']
+        except:
+            return('Error: Handle not found')
+        CC_address = rpc_connection.cclibaddress('19', pubkey)['PubkeyCCaddress(CClib)']
+        dil_conf = {}
+        dil_conf[mine] = {'txid': destpubtxid}
         
-                
 
     address_dict['addresses'] = [CC_address]
     CC_txids = rpc_connection.getaddressutxos(address_dict)
@@ -1138,7 +1149,7 @@ def endian_flip(string):
 
 
 def dil_balance(rpc_connection):
-    listunspent_result = dil_listunspent(rpc_connection)
+    listunspent_result = dil_listunspent(rpc_connection, 1)
     balance_dict = {}
     for handle in listunspent_result:
         for utxo in listunspent_result[handle]:
@@ -1150,6 +1161,17 @@ def dil_balance(rpc_connection):
         balance_dict[i] = balance_dict[i] / 100000000
 
     return(balance_dict)
+
+# get balance of arbitrary dilithium handle
+def dil_external_balance(rpc_connection):
+    handle = input('Please specify a handle: ')
+    result = dil_listunspent(rpc_connection, handle)
+    balance_sat = 0
+    if str(result).startswith('Error'):
+        return(result)
+    for utxo in result[handle]:
+        balance_sat += utxo['value'] + 100000000
+    return(str(balance_sat / 100000000))
 
 
 # output string's positions in a list given the list and string
@@ -1181,7 +1203,7 @@ def dil_pubkey_handles(rpc_connection):
         tx = rpc_connection.getrawtransaction(txid, 2)
         try:
             OP_ret = tx['vout'][-1]['scriptPubKey']['hex']
-        except Exception as e:
+        except:
             break
         decode_result = rpc_connection.decodeccopret(OP_ret)
         try:
