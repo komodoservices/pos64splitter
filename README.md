@@ -10,7 +10,7 @@ Currently, this will maintain a static number of UTXOs. This is important becaus
 ```shell
 sudo apt-get install python3 libgnutls28-dev libssl-dev
 sudo apt-get install python3-pip
-pip3 install base58 slick-bitcoinrpc
+pip3 install base58 slick-bitcoinrpc python-bitcoinlib
 ```
 
 [komodod](https://github.com/StakedChain/komodo) installed with your assetchain running.
