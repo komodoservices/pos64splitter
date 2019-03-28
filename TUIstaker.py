@@ -24,7 +24,7 @@ def load_conf():
 
 def initial_menu(staker_conf, msg):
     os.system('clear')
-    if msg[:5] == 'Error':
+    if str(msg[:5]) == 'Error':
         print(stakerlib.colorize(msg, 'red'))
     else:
         print(stakerlib.colorize(msg, 'green'))
@@ -44,7 +44,7 @@ def print_menu(menu_list, chain, msg):
     if isinstance(msg, dict) or isinstance(msg, list):
         pprint.pprint(msg)
     else: 
-        if msg[:5] == 'Error':
+        if str(msg[:5]) == 'Error':
             print(stakerlib.colorize(msg, 'red'))
         else:
             print(stakerlib.colorize(msg, 'green'))
@@ -269,7 +269,7 @@ dil_menu = ['List handles',
             'Qsendmany', 
             'balances', 
             'q_listunspent', 
-            'Dilithium stats']
+            'Dilithium Stats Menu']
 dil_stats_menu = ['List handles for an arbitrary pubkey',
                   'Get q_listunspent for an arbitary handle',
                   'Get q balance for an arbitary handle']
