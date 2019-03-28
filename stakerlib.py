@@ -205,7 +205,7 @@ def sendmany64(rpc_connection, amount):
         sendmany_result = rpc_connection.sendmany("", addresses_dict)
     except Exception as e:
         return('Error: sendmany command failed with ' + str(e))
-    return('Success! ' + sendmany_result)
+    return(sendmany_result)
 
 # function to do sendmany64 UTXOS times, locking all UTXOs except change
 def sendmanyloop(rpc_connection, amount, utxos):
