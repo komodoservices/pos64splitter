@@ -261,6 +261,8 @@ def RNDsendmanyloop(rpc_connection, amounts):
     txid_list = []
     for amount in amounts:
         sendmany64_txid = sendmany64(rpc_connection, amount)
+        if sendmany64_txid.startswith('Error'):
+            return(sendmany64_txid)
         txid_list.append(sendmany64_txid)
         getrawtx_result = rpc_connection.getrawtransaction(sendmany64_txid, 1)
         lockunspent_list = []
@@ -279,6 +281,9 @@ def RNDsendmanyloop(rpc_connection, amounts):
 
 def RNDsendmany_TUI(chain, rpc_connection):
 
+    if not os.path.isfile(chain + ".json"):
+        return('Error: + ' + chain + '.json not found. Please use importlist to import one ' +
+               'or genaddresses to create one.')
     try:
         balance = float(rpc_connection.getbalance())
     except Exception as e:
@@ -329,6 +334,8 @@ def RNDsendmany_TUI(chain, rpc_connection):
             finished = True
 
     sendmanyloop_result = RNDsendmanyloop(rpc_connection, AMOUNTS)
+    if str(sendmanyloop_result).startswith('Error'):
+        return(str(sendmanyloop_result))
     # unlock all locked utxos
     unlockunspent(rpc_connection)
     for i in sendmanyloop_result:
