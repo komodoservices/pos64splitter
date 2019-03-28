@@ -261,7 +261,7 @@ def RNDsendmanyloop(rpc_connection, amounts):
     txid_list = []
     for amount in amounts:
         sendmany64_txid = sendmany64(rpc_connection, amount)
-        if sendmany64_txid.startswith('Error'):
+        if str(sendmany64_txid).startswith('Error'):
             return(sendmany64_txid)
         txid_list.append(sendmany64_txid)
         getrawtx_result = rpc_connection.getrawtransaction(sendmany64_txid, 1)
