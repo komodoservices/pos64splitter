@@ -158,8 +158,11 @@ def chain_loop(chain, msg):
             msg = stakerlib.restart_daemon(chain, params, rpc_connection)
             chain_loop(chain, msg)
         elif int(selection) == 8:
-            stats_loop(chain, '')
+            msg = stakerlib.unlockunspent(rpc_connection)
+            chain_loop(chain, 'all utxos unlocked')
         elif int(selection) == 9:
+            stats_loop(chain, '')
+        elif int(selection) == 10:
             dil_loop(chain, 'Dilithium')
         else:
             print('BUG!')
@@ -261,7 +264,8 @@ def dil_stats_loop(chain, msg):
             msg = stakerlib.dil_external_balance(rpc_connection)
             dil_stats_loop(chain, msg)
 
-chain_menu = ['sendmany64','RNDsendmany', 'genaddresses', 'importlist', 'withdraw', 'Start a new chain', 'Restart daemon with -blocknotify', 'stats', 'Dilithium']
+chain_menu = ['sendmany64','RNDsendmany', 'genaddresses', 'importlist', 'withdraw', 'Start a new chain', 'Restart daemon with -blocknotify', 'unlock all locked utxos',
+ 'stats', 'Dilithium']
 stats_menu = ['balance', 'UTXO count']
 dil_menu = ['List handles',
             'Register a new handle', 
