@@ -234,13 +234,13 @@ def sendmany64_TUI(chain, rpc_connection):
 
     AMOUNT = user_input('Please specify the size of UTXOs: ', float)
     if AMOUNT == 'exit':
-        return(0)
+        return('0')
     
     if float(AMOUNT) < float(1):
         return('Error: Cant stake coin amounts less than 1 coin, try again.')
     UTXOS = user_input("Please specify the amount of UTXOs to send to each segid: ", int)
     if UTXOS == 'exit':
-        return(0)
+        return('0')
 
     total = float(AMOUNT) * int(UTXOS) * 64
     print('Total amount: ' + str(total))
@@ -294,7 +294,7 @@ def RNDsendmany_TUI(chain, rpc_connection):
     while True:
         UTXOS = user_input("Please specify the amount of UTXOs to send to each segid: ", int)
         if UTXOS == 'exit':
-            return(0)
+            return('0')
         if UTXOS < 3:
             print('Must have more than 3 utxos per segid, try again.')
             continue
@@ -304,7 +304,7 @@ def RNDsendmany_TUI(chain, rpc_connection):
         print('Average utxo size: ' + str(average))
         variance = user_input('Enter percentage of variance: ', float)
         if variance == 'exit':
-            return(0)
+            return('0')
         minsize = round(float(average) * (1-(variance/100)),2)
         if minsize < 1:
             print('Cant stake coin amounts less than 1 coin, try again.')
