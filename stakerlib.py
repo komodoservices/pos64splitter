@@ -203,6 +203,8 @@ def sendmany64(rpc_connection, amount):
     # make rpc call, issue transaction
     try:
         sendmany_result = rpc_connection.sendmany("", addresses_dict)
+        print(addresses_dict)
+        input('dummy')
     except Exception as e:
         return('Error: sendmany command failed with ' + str(e))
     return(sendmany_result)
