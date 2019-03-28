@@ -189,6 +189,7 @@ def unlockunspent(rpc_connection):
 # iterate addresses list, construct dictionary,
 # with amount as value for each address
 def sendmany64(rpc_connection, amount):
+    chain = rpc_connection.getinfo()['name']
     addresses_dict = {}
     if not os.path.isfile(chain + ".json"):
         return('Error: + ' + chain + '.json not found. Please use importlist to import one ' +
