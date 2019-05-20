@@ -251,7 +251,7 @@ def sendmany64_TUI(chain, rpc_connection):
 
     # unlock all locked utxos
     unlock_response = unlockunspent(rpc_connection)
-    if str(unlock_response).startswith('Error')
+    if str(unlock_response).startswith('Error'):
         return(unlock_response)
 
     for i in sendmanyloop_result:
@@ -342,7 +342,7 @@ def RNDsendmany_TUI(chain, rpc_connection):
 
     # unlock all locked utxos
     unlock_response = unlockunspent(rpc_connection)
-    if str(unlock_response).startwith('Error')
+    if str(unlock_response).startwith('Error'):
         return(unlock_response)
 
     for i in sendmanyloop_result:
