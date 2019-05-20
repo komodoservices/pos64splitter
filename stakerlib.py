@@ -17,12 +17,14 @@ import tarfile
 import shutil
 import time
 import secrets
-import readline # FIXME not supported on windows
 import bitcoin
 from bitcoin.wallet import P2PKHBitcoinAddress
 from bitcoin.core import x
 from bitcoin.core import CoreMainParams
 from slickrpc import Proxy
+
+if platform.system() != 'Windows':
+    import readline
 
 class CoinParams(CoreMainParams):
     MESSAGE_START = b'\x24\xe9\x27\x64'
@@ -169,20 +171,16 @@ def addr_convert(prefix, address):
     return(final.decode())
 
 
-# FIXME don't sys.exit from TUI
 # function to unlock ALL lockunspent UTXOs
 def unlockunspent(rpc_connection):
-    try:
-        listlockunspent_result = rpc_connection.listlockunspent()
-    except Exception as e:
-        sys.exit(e)
+    listlockunspent_result = rpc_connection.listlockunspent()
     unlock_list = []
     for i in listlockunspent_result:
         unlock_list.append(i)
     try:
         lockunspent_result = rpc_connection.lockunspent(True, unlock_list)
     except Exception as e:
-        sys.exit(e)
+        return('Error: lockunspent rpc command failed with ' + str(e))
     return(lockunspent_result)
 
 
@@ -202,18 +200,16 @@ def sendmany64(rpc_connection, amount):
 
     # make rpc call, issue transaction
     try:
-        sendmany_result = rpc_connection.sendmany("", addresses_dict)
-        print(addresses_dict)
-        input('dummy')
+        sendmany_result = rpc_connection.sendmany("", addresses_dict, 0)
     except Exception as e:
-        return('Error: sendmany command failed with ' + str(e))
+        return('Error: sendmany command failed with ' + str(e) + '\nPlease use [8 | unlock all locked utxos] then try again')
     return(sendmany_result)
 
 # function to do sendmany64 UTXOS times, locking all UTXOs except change
 def sendmanyloop(rpc_connection, amount, utxos):
     txid_list = []
     for i in range(int(utxos)):
-        sendmany64_txid = sendmany64(rpc_connection, amount)
+        sendmany64_txid = sendmany64(rpc_connection, amount, 0)
         txid_list.append(sendmany64_txid)
         getrawtx_result = rpc_connection.getrawtransaction(sendmany64_txid, 1)
         lockunspent_list = []
@@ -252,8 +248,12 @@ def sendmany64_TUI(chain, rpc_connection):
               '\nTotal avalible per segid is: ' + str(segidTotal))
 
     sendmanyloop_result = sendmanyloop(rpc_connection, AMOUNT, UTXOS)
+
     # unlock all locked utxos
-    unlockunspent(rpc_connection)
+    unlock_response = unlockunspent(rpc_connection)
+    if str(unlock_response).startswith('Error')
+        return(unlock_response)
+
     for i in sendmanyloop_result:
         print(i)
     print('Success!')
@@ -262,10 +262,13 @@ def sendmany64_TUI(chain, rpc_connection):
 def RNDsendmanyloop(rpc_connection, amounts):
     txid_list = []
     for amount in amounts:
+        time.sleep(1)
         sendmany64_txid = sendmany64(rpc_connection, amount)
         if str(sendmany64_txid).startswith('Error'):
             return(sendmany64_txid)
         txid_list.append(sendmany64_txid)
+        print('smtxid', sendmany64_txid)
+        input('hold')
         getrawtx_result = rpc_connection.getrawtransaction(sendmany64_txid, 1)
         lockunspent_list = []
         # find change output, lock all other outputs
@@ -284,7 +287,7 @@ def RNDsendmanyloop(rpc_connection, amounts):
 def RNDsendmany_TUI(chain, rpc_connection):
 
     if not os.path.isfile(chain + ".json"):
-        return('Error: + ' + chain + '.json not found. Please use importlist to import one ' +
+        return('Error: ' + chain + '.json not found. Please use importlist to import one ' +
                'or genaddresses to create one.')
     try:
         balance = float(rpc_connection.getbalance())
@@ -338,8 +341,12 @@ def RNDsendmany_TUI(chain, rpc_connection):
     sendmanyloop_result = RNDsendmanyloop(rpc_connection, AMOUNTS)
     if str(sendmanyloop_result).startswith('Error'):
         return(str(sendmanyloop_result))
+
     # unlock all locked utxos
-    unlockunspent(rpc_connection)
+    unlock_response = unlockunspent(rpc_connection)
+    if str(unlock_response).startwith('Error')
+        return(unlock_response)
+
     for i in sendmanyloop_result:
         print(i)
     return('Success!')
@@ -365,13 +372,13 @@ def genaddresses(chain, rpc_connection):
     for position in range(64):
         segids_array.append(segids[position])
 
-    # save output to list.py
+    # save output to <CHAIN>.json
     f = open(chain + ".json", "w+")
     f.write(json.dumps(segids_array))
     return('Success! ' + chain + '.json created. '
           'THIS FILE CONTAINS PRIVATE KEYS. KEEP IT SAFE.')
 
-# FIXME make this rescan only on 64th import
+
 # import list.json to chain 
 def import_list(chain, rpc_connection):
     user_input = input('Please specify a json file to import: ')
@@ -379,13 +386,23 @@ def import_list(chain, rpc_connection):
         return('Error: File not found. Make sure you use the full file name. ' +
                'You can use the genaddresses option to generate a new one.')
 
-    # FIXME add check to see if it's actually json
     with open(user_input) as key_list:
-        json_data = json.load(key_list)
-        for i in json_data:
-            print(i[3])
-            rpc_connection.importprivkey(i[2])
-    return('Success!')
+        try:
+            json_data = json.load(key_list)
+        except Exception as e:
+            return('Error: Please ensure this file is a valid json.\n' + str(e))
+
+    for i in json_data[:-1]:
+        print(rpc_connection.importprivkey(i[2], "", False))
+
+    print(rpc_connection.importprivkey(json_data[-1][2]))
+    # save output to <CHAIN>.json
+    f = open(chain + ".json", "w+")
+    f.write(json.dumps(json_data))
+    return('Success! Your node is now rescanning. ' + 
+           'This may take a long amount of time. ' + 
+           'You can monitor the progress from the debug.log\n' + 
+           chain + '.json created! THIS FILE CONTAINS PRIVATE KEYS. KEEP IT SAFE!')
     
 def extract_segid(_segid,unspents):
     ret = []
@@ -1223,3 +1240,72 @@ def dil_pubkey_handles(rpc_connection):
             break
     return(handle_list)
 
+
+def average_stake(rpc_connection):
+    days = input('Please specify amount of days(1 day = 1440 blocks): ')
+    try:
+        days = int(days)
+    except:
+        return('Error: days must be integer')
+    if days <= 0:
+        return('Error: days must be positive')
+    address = input('Please specify address(press enter to use current -pubkey address): ')
+    if address == '':
+        try:
+            address = rpc_connection.setpubkey()['address']
+        except Exception as e:
+            return('Error: -pubkey not set ' + str(e))
+    try:
+        address_check = addr_convert('3c', address)
+        if address_check != address:
+            return('Error: Invalid address must be R address')
+    except Exception as e:
+        return('Error: Invalid address ' + str(e))
+    address_dict = {}
+    address_dict['addresses'] = [address]
+
+    txids = rpc_connection.getaddresstxids(address_dict)
+    height = int(rpc_connection.getinfo()['blocks'])
+    count = 1
+    counts = []
+    txs = []
+    total = 0
+
+    print('Please wait...')
+    for txid in txids:
+        tx = rpc_connection.getrawtransaction(txid, 2)
+        try:
+            dum = tx['vin'][0]['coinbase']
+            txs.append(tx)
+        except:
+            continue
+
+    for i in range(1,int(days)):
+        upper = 1440*i
+        lower = 1440*(i-1)
+        for tx in txs:
+            if height - lower >= tx['height'] >= height - upper:
+                count += 1
+                total += tx['vout'][0]['valueSat']
+        counts.append(count)
+        print('day' + str(i) + ' count:' + str(count) + ' range: ' + str(height-lower) + '-' + str(height-upper))
+        count = 0
+
+    print('Average:', sum(counts) / (len(counts)))
+    print('Total:', total / 100000000)
+    input('Press enter to return to menu')
+    return('')
+
+# function to sum balance of each segid
+def segid_balance(rpc_connection):
+    print('Please wait...')
+    result_dict = {}
+    for i in range(64):
+        result_dict[i] = 0
+    snapshot = rpc_connection.getsnapshot()
+    for address in snapshot['addresses']:
+        result_dict[address['segid']] += float(address['amount']) * 100000000
+    for i in result_dict:
+         print(str(i) + ' ' + str(result_dict[i] / 100000000))
+    input('Press enter to return to menu')
+    return('')

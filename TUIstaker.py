@@ -190,6 +190,12 @@ def stats_loop(chain, msg):
         elif int(selection) == 2:
             msg = str(len(rpc_connection.listunspent()))
             stats_loop(chain, msg)
+        elif int(selection) == 3:
+            msg = stakerlib.average_stake(rpc_connection)
+            stats_loop(chain, msg)
+        elif int(selection) == 4:
+            msg = stakerlib.segid_balance(rpc_connection)
+            stats_loop(chain, msg)
         else:
             print('BUG!')
 
@@ -264,9 +270,20 @@ def dil_stats_loop(chain, msg):
             msg = stakerlib.dil_external_balance(rpc_connection)
             dil_stats_loop(chain, msg)
 
-chain_menu = ['sendmany64','RNDsendmany', 'genaddresses', 'importlist', 'withdraw', 'Start a new chain', 'Restart daemon with -blocknotify', 'unlock all locked utxos',
- 'stats', 'Dilithium']
-stats_menu = ['balance', 'UTXO count']
+chain_menu = ['sendmany64',
+              'RNDsendmany',
+              'genaddresses',
+              'importlist',
+              'withdraw',
+              'Start a new chain',
+              'Restart daemon with -blocknotify',
+              'unlock all locked utxos',
+              'stats', 
+              'Dilithium']
+stats_menu = ['balance',
+              'UTXO count',
+              'staking/mining daily average',
+              'global segid balances']
 dil_menu = ['List handles',
             'Register a new handle', 
             'send t -> q', 'Qsend', 
