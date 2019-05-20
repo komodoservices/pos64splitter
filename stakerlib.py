@@ -267,8 +267,6 @@ def RNDsendmanyloop(rpc_connection, amounts):
         if str(sendmany64_txid).startswith('Error'):
             return(sendmany64_txid)
         txid_list.append(sendmany64_txid)
-        print('smtxid', sendmany64_txid)
-        input('hold')
         getrawtx_result = rpc_connection.getrawtransaction(sendmany64_txid, 1)
         lockunspent_list = []
         # find change output, lock all other outputs
