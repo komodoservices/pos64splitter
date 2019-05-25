@@ -596,7 +596,7 @@ def restart_daemon(chain, params, rpc_connection):
            for ip in params[i]:
                param_list.append('-addnode=' + ip)
        else:
-           param_list.append('-' + i + '=' + params[i])
+           param_list.append('-' + str(i) + '=' + str(params[i]))
     param_list.append(blocknotify)
     param_list.append(pubkey)
     proc = subprocess.Popen(param_list, stdout=DEVNULL, stderr=STDOUT, preexec_fn=os.setpgrp)
