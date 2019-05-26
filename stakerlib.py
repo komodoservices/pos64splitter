@@ -1446,14 +1446,18 @@ def estimate_stake_balance(rpc):
             if not staked_address in staked_from:
                 staked_from.append(staked_address)
 
-    print('Total addresses: ' + str(len(staked_from)))
-    print('Total staked blocks: ' + str(staked_block_count))
-    print('Total staked amount: ' + str(total_staked/100000000))
+    utxos = rpc.getaddressutxos({"addresses": staked_from})
     total = 0
     for addy in staked_from:
         balance = rpc.getaddressbalance({"addresses": [addy]})
         total += balance['balance']
+    total = total/100000000
 
-    print('Total estimated balance: ' + str(total/100000000))
+    print('Total addresses: ' + str(len(staked_from)))
+    print('Total staked blocks: ' + str(staked_block_count))
+    print('Total staked amount: ' + str(total_staked/100000000))
+    print('Total estimated balance: ' + str(total))
+    print('Total UTXOs: ' + str(len(utxos)))
+    print('Average UTXO size: ' + str(total/len(utxos)))
     input('\n[press enter to return to menu]')
     return('')
