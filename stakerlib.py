@@ -1302,9 +1302,9 @@ def average_stake(rpc):
     try:
         block_count = int(block_count)
     except:
-        return('Error: days must be integer')
+        return('Error: blocks must be integer')
     if block_count <= 0:
-        return('Error: days must be positive')
+        return('Error: blocks must be positive')
     print('Please wait...')
 
     height = int(rpc.getinfo()['blocks'])
@@ -1324,6 +1324,59 @@ def average_stake(rpc):
     average = total_coin / staked_count
     print('\nAmount of staked blocks in range ' + str(start_height) + '-' + str(height) + ': ' + str(staked_count))
     print('Average amount to stake a block: ' + str(average))
+    input('\n[press enter to return to menu]')
+    return('')
+
+
+def top_stakers(rpc_connection, to_from):
+    try:
+        block_count = int(input('Please specify amount of previous blocks: '))
+    except:
+        return('Error: blocks must be integer')
+    if block_count <= 0:
+        return('Error: blocks must be positive')
+
+    height = int(rpc_connection.getinfo()['blocks'])
+
+    if block_count > height:
+        block_count = height
+
+    yn = input('Include addresses with a single stake?(y/n): ')
+    if yn.startswith('y'):
+        yn = 'y'
+    else:
+        yn = 'n'
+
+    print('Please wait...\n')
+    staked_blocks = []
+    staked_from = {}
+    mined_to = {}
+    for i in range(height-block_count,height):
+        block = rpc_connection.getblock(str(i), 2)
+        if block['segid'] != -1:
+             staked_blocks.append(block)
+    for block in staked_blocks:
+        staked_from_address = block['tx'][-1]['vout'][-1]['scriptPubKey']['addresses'][0]
+        mined_to_address = block['tx'][0]['vout'][0]['scriptPubKey']['addresses'][0]
+        if not staked_from_address in staked_from:
+             staked_from[staked_from_address] = 1
+        else:
+             staked_from[staked_from_address] += 1
+        if not mined_to_address in mined_to:
+             mined_to[mined_to_address] = 1
+        else:
+             mined_to[mined_to_address] += 1
+    if to_from:
+        select = mined_to
+    else:
+        select = staked_from
+    s = [(k, select[k]) for k in sorted(select, key=select.get, reverse=True)]
+    for k, v in s:
+        if yn == 'y':
+            print(k, v)
+        else:
+            if v != 1:
+                print(k, v)
     input('\n[press enter to return to menu]')
     return('')
 

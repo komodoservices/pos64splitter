@@ -202,6 +202,12 @@ def stats_loop(chain, msg):
         elif int(selection) == 6:
             msg = stakerlib.average_stake(rpc_connection)
             stats_loop(chain, msg)
+        elif int(selection) == 7:
+            msg = stakerlib.top_stakers(rpc_connection, True)
+            stats_loop(chain, msg)
+        elif int(selection) == 8:
+            msg = stakerlib.top_stakers(rpc_connection, False)
+            stats_loop(chain, msg)
         else:
             print('BUG!')
 
@@ -291,7 +297,9 @@ stats_menu = ['balance',
               'UTXO average size',
               'staking/mining daily average',
               'global segid balances',
-              'average coins to stake a block']
+              'average coins to stake a block',
+              'top staked to addresses',
+              'top staked from addresses']
 dil_menu = ['List handles',
             'Register a new handle', 
             'send t -> q', 'Qsend', 
