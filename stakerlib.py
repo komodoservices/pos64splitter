@@ -1405,6 +1405,55 @@ def segid_balance(rpc_connection):
         result_dict[address['segid']] += float(address['amount']) * 100000000
     for i in result_dict:
          print(str(i) + ' ' + str(result_dict[i] / 100000000))
-    input('Press enter to return to menu')
+    input('\n[press enter to return to menu]')
     return('')
-    
+
+# find any address that has ever staked a block to specified address, sum balances
+def estimate_stake_balance(rpc):
+    address = input('Please specify address: ')
+    if address == '':
+        try:
+            address = rpc.setpubkey()['address']
+        except Exception as e:
+            return('Error: -pubkey not set ' + str(e))
+    try:
+        address_check = addr_convert('3c', address)
+        if address_check != address:
+            return('Error: Invalid address must be R address')
+    except Exception as e:
+        return('Error: Invalid address ' + str(e))
+
+    print('Please wait...\n')
+
+    staked_from = [address]
+    addresstxids = rpc.getaddresstxids({"addresses": [address]})
+    total_staked = 0
+    staked_block_count = 0
+
+    for txid in addresstxids:
+        tx = rpc.getrawtransaction(txid, 2)
+        if 'coinbase' in tx['vin'][0]:
+            try:
+                block = rpc.getblock(str(tx['height']), 2)
+            except Exception as e:
+                print(e)
+                continue
+            if block['segid'] == -1:
+                continue
+            staked_block_count += 1
+            total_staked += tx['vout'][0]['valueSat']
+            staked_address = block['tx'][-1]['vout'][0]['scriptPubKey']['addresses'][0]
+            if not staked_address in staked_from:
+                staked_from.append(staked_address)
+
+    print('Total addresses: ' + str(len(staked_from)))
+    print('Total staked blocks: ' + str(staked_block_count))
+    print('Total staked amount: ' + str(total_staked/100000000))
+    total = 0
+    for addy in staked_from:
+        balance = rpc.getaddressbalance({"addresses": [addy]})
+        total += balance['balance']
+
+    print('Total estimated balance: ' + str(total/100000000))
+    input('\n[press enter to return to menu]')
+    return('')

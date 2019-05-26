@@ -208,6 +208,9 @@ def stats_loop(chain, msg):
         elif int(selection) == 8:
             msg = stakerlib.top_stakers(rpc_connection, False)
             stats_loop(chain, msg)
+        elif int(selection) == 9:
+            msg = stakerlib.estimate_stake_balance(rpc_connection)
+            stats_loop(chain, msg)
         else:
             print('BUG!')
 
@@ -299,7 +302,8 @@ stats_menu = ['balance',
               'global segid balances',
               'average coins to stake a block',
               'top staked to addresses',
-              'top staked from addresses']
+              'top staked from addresses',
+              'estimate staker\'s total balance']
 dil_menu = ['List handles',
             'Register a new handle', 
             'send t -> q', 'Qsend', 
