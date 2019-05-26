@@ -318,6 +318,7 @@ def RNDsendmany_TUI(chain, rpc_connection):
         ret = input('Are you happy with these?(y/n): ').lower()
         if ret.startswith('y'):
             break
+    print('Please wait....')
 
     total = 0
     totalamnt = 0
@@ -1239,7 +1240,7 @@ def dil_pubkey_handles(rpc_connection):
     return(handle_list)
 
 
-def average_stake(rpc_connection):
+def my_stakes(rpc_connection):
     days = input('Please specify amount of days(1 day = 1440 blocks): ')
     try:
         days = int(days)
@@ -1294,6 +1295,52 @@ def average_stake(rpc_connection):
     input('Press enter to return to menu')
     return('')
 
+
+# determine average amount of coins used to stake for N blocks
+def average_stake(rpc):
+    block_count = input('Please specify amount of previous blocks: ')
+    try:
+        block_count = int(block_count)
+    except:
+        return('Error: days must be integer')
+    if block_count <= 0:
+        return('Error: days must be positive')
+    print('Please wait...')
+
+    height = int(rpc.getinfo()['blocks'])
+
+    if block_count > height:
+        block_count = height
+
+    start_height = height - block_count
+    staked_count = 0
+    total = 0
+    for i in range(start_height, height+1):
+        block = rpc.getblock(str(i), 2)
+        if block['segid'] != -1:
+            staked_count += 1
+            total += block['tx'][-1]['vout'][0]['valueZat']
+    total_coin = total/100000000
+    average = total_coin / staked_count
+    print('\nAmount of staked blocks in range ' + str(start_height) + '-' + str(height) + ': ' + str(staked_count))
+    print('Average amount to stake a block: ' + str(average))
+    input('\n[press enter to return to menu]')
+    return('')
+
+
+def my_utxo_average(rpc):
+    listunspent = rpc.listunspent()
+    total = 0
+    for i in listunspent:
+        total += int(i['amount']*100000000+0.000000004999)
+    total = total / 100000000
+    average = total/len(listunspent)
+    print('\nTotal: ' + str(total))
+    print('Amount of UTXOs: ' + str(len(listunspent)))
+    print('Average: ' + str(average))
+    input('\n[press enter to return to menu]')
+    return('')
+
 # function to sum balance of each segid
 def segid_balance(rpc_connection):
     print('Please wait...')
@@ -1307,3 +1354,4 @@ def segid_balance(rpc_connection):
          print(str(i) + ' ' + str(result_dict[i] / 100000000))
     input('Press enter to return to menu')
     return('')
+    

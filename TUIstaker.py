@@ -191,10 +191,16 @@ def stats_loop(chain, msg):
             msg = str(len(rpc_connection.listunspent()))
             stats_loop(chain, msg)
         elif int(selection) == 3:
-            msg = stakerlib.average_stake(rpc_connection)
+            msg = stakerlib.my_utxo_average(rpc_connection)
             stats_loop(chain, msg)
         elif int(selection) == 4:
+            msg = stakerlib.my_stakes(rpc_connection)
+            stats_loop(chain, msg)
+        elif int(selection) == 5:
             msg = stakerlib.segid_balance(rpc_connection)
+            stats_loop(chain, msg)
+        elif int(selection) == 6:
+            msg = stakerlib.average_stake(rpc_connection)
             stats_loop(chain, msg)
         else:
             print('BUG!')
@@ -282,8 +288,10 @@ chain_menu = ['sendmany64',
               'Dilithium']
 stats_menu = ['balance',
               'UTXO count',
+              'UTXO average size',
               'staking/mining daily average',
-              'global segid balances']
+              'global segid balances',
+              'average coins to stake a block']
 dil_menu = ['List handles',
             'Register a new handle', 
             'send t -> q', 'Qsend', 
