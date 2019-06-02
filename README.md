@@ -23,7 +23,7 @@ The following examples will use CFEK. Replace CFEK with the chain you are using.
 
 `cd pos64staker`
 
-`./genaddresses`
+`./genaddresses.py`
 ```shell
 Please specify chain:CFEK
 ```
