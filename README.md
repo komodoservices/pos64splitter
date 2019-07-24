@@ -7,50 +7,109 @@ This is a work in progress. We aim to make this easy to use and as "set and forg
 Currently, this will maintain a static number of UTXOs. This is important because a staking wallet can become very bloated over time. The block reward of any staked blocks will be combined with the UTXO used to stake the block.
 
 ## Dependencies
+
+### Linux
+
 ```shell
 sudo apt-get install python3 libgnutls28-dev libssl-dev
 sudo apt-get install python3-pip
+pip3 install setuptools 
+pip3 install wheel
 pip3 install base58 slick-bitcoinrpc python-bitcoinlib
 ```
 
-[komodod](https://github.com/StakedChain/komodo) installed with your assetchain running.
+Please see the [Installing Smart Chain Software From Source Code](https://developers.komodoplatform.com/basic-docs/smart-chains/smart-chain-setup/installing-from-source.html#linux) document or download [pre-compiled binaries](https://github.com/KomodoPlatform/komodo/releases/).
+
+The komodod binary must be copied to `~/pos64staker/komodod` for features such as `Start a new chain`, `restart daemon with -blocknotify` and `start a chain from assetchains.json`. 
+
+### OSX
+
+Install Command Line Tools and homebrew:
+
+```shell
+xcode-select --install
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+```
+
+Install the dependencies:
+
+```shell
+brew install python
+brew install openssl
+pip3 install base58 slick-bitcoinrpc python-bitcoinlib
+```
+
+Please see the [Installing Smart Chain Software From Source Code](https://developers.komodoplatform.com/basic-docs/smart-chains/smart-chain-setup/installing-from-source.html#macos) document or download [pre-compiled binaries](https://github.com/KomodoPlatform/komodo/releases/).
+
+The komodod binary must be copied to `~/pos64staker/komodod` for features such as `Start a new chain`, `restart daemon with -blocknotify` and `start a chain from assetchains.json`. 
 
 ## How to Use
 
-The following examples will use CFEK. Replace CFEK with the chain you are using.
-
-`git clone https://github.com/StakedChain/pos64staker`
-
-`cd pos64staker`
-
-`./genaddresses.py`
 ```shell
-Please specify chain:CFEK
+git clone https://github.com/KMDLabs/pos64staker
+cd pos64staker
+./TUIstaker.py
 ```
 
-This will create a `list.json` file in the current directory. **THIS FILE CONTAINS PRIVATE KEYS. KEEP IT SAFE.**
-Copy this file to the directory `komodod` is located. 
+You will be prompted with the initial menu:
 
-`cp list.json ~/komodo/src/list.json`
-
-`./sendmany64.py`
 ```shell
-Please specify chain:CFEK
-Balance: 1000000.77
-Please specify the size of UTXOs:10
-Please specify the amount of UTXOs to send to each segid:10
+pos64staker by KMDLabs
+===============
+
+0 | Start a chain from assetchains.json
+1 | Bootstrap a chain from dexstats.info
+2 | <Add/remove chain>
+q | Exit TUI
+===============
 ```
-Please take note of what this is actually asking for. The above example will send 6400 coins total. It will send 100 coins in 10 UTXOs to each of the 64 segids. Will throw error if your entered amounts are more than your balance. Will tell you how much avalible you have for each segid.
 
-You now need to start the daemon with -blocknotify and -pubkey set.
+`0 | Start a chain from assetchains.json`
+This can be used if the chain is not already running and it is included in jl777's [assetchains.json](https://github.com/jl777/komodo/blob/beta/src/assetchains.json`) file. 
 
-Fetch a pubkey from your `list.json` and place it in your start command. For example:
+`1 | Bootstrap a chain from dexstats.info`
+This will attempt to bootstrap the chain from dexstats.info. Please note that not all Smart Chain bootstraps are available on dexstats.info. 
 
-`./komodod -ac_name=CFEK -ac_supply=1000000 -ac_reward=10000000000 -ac_cc=2 -ac_staked=50 -addnode=195.201.20.230 -addnode=195.201.137.5  -pubkey=0367e6b61a60f9fe6748c27f40d0afe1681ec2cc125be51d47dad35955fab3ba3b '-blocknotify=/home/<USER>/pos64staker/staker.py %s CFEK'`
+`2 | <Add/remove chain>`
+If the chain is already running, this can be used to add it to `staker.conf` file. 
 
-NOTE the CFEK in -blocknotify make sure you change this to the correct chain name you are using also note the single quotes.
+After selecting one of these options, the menu will be updated to include the chain you selected. 
 
-After the daemon has started and is synced simply do `komodo-cli -ac_name=CFEK setgenerate true 0` to begin staking. 
+```shell
+pos64staker by KMDLabs
+===============
+0 | LABS
+
+1 | Start a chain from assetchains.json
+2 | Bootstrap a chain from dexstats.info
+3 | <Add/remove chain>
+q | Exit TUI
+===============
+```
+
+Now select the chain by inputting `0`(or the associated value if you have added multiple chains) and hitting enter. This will bring you to the main menu of pos64staker:
+
+```shell
+LABS
+===============
+0 | <return to previous menu>
+
+1 | sendmany64
+2 | RNDsendmany
+3 | genaddresses
+4 | importlist
+5 | withdraw
+6 | Start a new chain
+7 | Restart daemon with -blocknotify
+8 | unlock all locked utxos
+9 | stats
+10 | Dilithium
+
+q | Exit TUI
+===============
+```
+
+If this is your first time setting this up, you will want to do `genaddresses`, `RNDsendmany64` then `Restart daemon with -blocknotify`.
 
 
 ### How the staker.py works
