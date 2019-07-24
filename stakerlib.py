@@ -620,20 +620,17 @@ def restart_daemon(chain, params, rpc_connection):
 def get_chainparams(chain):
     operating_system = platform.system()
     ac_names = []
-    if operating_system == 'Linux':
+    if operating_system == 'Linux' or operating_system == 'Darwin':
         if os.path.isfile("komodod"):
             if not os.path.isfile("assetchains.json"):
                 print("No assetchains.json found. Downloading latest from jl777\'s beta branch")
                 urllib.request.urlretrieve("https://raw.githubusercontent.com/jl777/komodo/beta/src/assetchains.json", "assetchains.json")
             with open('assetchains.json', 'r') as f:
                 asset_json = json.load(f)
-                #for lol in asset_json:
-                    #ac_names.append(i['ac_name'])
-                #if chain in ac_names:
                 for i in asset_json:
                     ac_names.append(i['ac_name'])
                 
-                if chain not in ac_names:# FIXME
+                if chain not in ac_names:
                     return(0)
                 else:
                     for i in asset_json:
@@ -642,7 +639,7 @@ def get_chainparams(chain):
         else:
             print('Please copy/move komodod to the same directory as TUIstaker.py')
     else:
-        print('Linux is the only supported OS right now. Please restart daemon manually')
+        print('Linux is the only supported OS right now. Please restart daemon manually') #FIXME should work on OSX just fine, test windows
 
 def createchain(chain, rpc_connection):
     def blockcount():
