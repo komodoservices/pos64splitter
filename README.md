@@ -1,6 +1,6 @@
 # pos64splitter
 
-An automated staker for PoS assetchains. Please see https://docs.komodoplatform.com/komodo/assetchain-params.html#ac-staked for details on pos64 POS implementation. 
+An automated staker for PoS assetchains. Please see https://developers.komodoplatform.com/basic-docs/antara/antara-setup/antara-customizations.html#ac-staked for details on pos64 POS implementation. 
 
 This is a work in progress. We aim to make this easy to use and as "set and forget" as possible. Please feel free to contribute code and ideas. 
 
