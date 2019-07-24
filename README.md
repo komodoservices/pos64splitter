@@ -51,7 +51,7 @@ cd pos64staker
 ./TUIstaker.py
 ```
 
-You will be prompted with the initial menu:
+# Initial Menu
 
 ```shell
 pos64staker by KMDLabs
@@ -65,13 +65,16 @@ q | Exit TUI
 ```
 
 `0 | Start a chain from assetchains.json`
-This can be used if the chain is not already running and it is included in jl777's [assetchains.json](https://github.com/jl777/komodo/blob/beta/src/assetchains.json`) file. 
+
+This can be used if the chain is not already running and it is included in jl777's [assetchains.json](https://github.com/jl777/komodo/blob/beta/src/assetchains.json) file. This will first check to see if the file `~pos64staker/assetchains.json` exists. If it does not, it will download the latest from jl777's komodo repo beta branch. If a new chain is added to this file, you will need to delete `~pos64staker/assetchains.json` to force pos64staker to fetch the latest version. It is also possible to add chains to this file manually if they are not included in jl777's verison. 
 
 `1 | Bootstrap a chain from dexstats.info`
-This will attempt to bootstrap the chain from dexstats.info. Please note that not all Smart Chain bootstraps are available on dexstats.info. 
+
+This will attempt to bootstrap the chain from dexstats.info. This will download the neccesary blockchain data and automatically extract it to the chain's data directory, negating the need to sync the chain manually. Please note that not all Smart Chain bootstraps are available on dexstats.info. 
 
 `2 | <Add/remove chain>`
-If the chain is already running, this can be used to add it to `staker.conf` file. 
+
+If the chain is already running, this can be used to add it to `staker.conf` file. This file is just a simple list of chains you have previously added.
 
 After selecting one of these options, the menu will be updated to include the chain you selected. 
 
@@ -89,27 +92,42 @@ q | Exit TUI
 
 Now select the chain by inputting `0`(or the associated value if you have added multiple chains) and hitting enter. This will bring you to the main menu of pos64staker:
 
+# Staking Menu
+
 ```shell
-LABS
+THC
 ===============
 0 | <return to previous menu>
 
-1 | sendmany64
-2 | RNDsendmany
-3 | genaddresses
-4 | importlist
-5 | withdraw
-6 | Start a new chain
-7 | Restart daemon with -blocknotify
-8 | unlock all locked utxos
-9 | stats
-10 | Dilithium
+1 | Generate address json
+2 | Distribute balance evenly across segids
+3 | Import an already existing address json
+4 | Withdraw coins
+5 | Start a new chain
+6 | Restart daemon with -blocknotify
+7 | Unlock all locked utxos
+8 | Stats menu
+9 | Dilithium menu
 
 q | Exit TUI
 ===============
 ```
 
-If this is your first time setting this up, you will want to do `genaddresses`, `RNDsendmany64` then `Restart daemon with -blocknotify`.
+`1 | Generate address json`
+
+This is very first thing you should select if you are setting this up on a chain for the first time. This will generate a json file with 64 addresses, one for each segid. The file will be saved at `~/pos64staker/<CHAIN>.json`. It is **vitally important** to keep this file safe as it has private keys for each address in it. 
+
+`2 | Distribute balance evenly across segids`
+
+
+
+`3 | Import an already existing address json`
+`4 | Withdraw coins`
+`5 | Start a new chain`
+`6 | Restart daemon with -blocknotify`
+`7 | Unlock all locked utxos`
+`8 | Stats menu`
+`9 | Dilithium menu`
 
 
 ### How the staker.py works

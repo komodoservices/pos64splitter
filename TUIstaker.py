@@ -136,33 +136,30 @@ def chain_loop(chain, msg):
             os.system('clear')
             select_loop('')
         elif int(selection) == 1:
-            msg = stakerlib.sendmany64_TUI(chain, rpc_connection)
+            msg = stakerlib.genaddresses(chain, rpc_connection)
             chain_loop(chain, msg)
         elif int(selection) == 2:
             msg = stakerlib.RNDsendmany_TUI(chain, rpc_connection)
             chain_loop(chain, msg)
         elif int(selection) == 3:
-            msg = stakerlib.genaddresses(chain, rpc_connection)
-            chain_loop(chain, msg)
-        elif int(selection) == 4:
             msg = stakerlib.import_list(chain, rpc_connection)
             chain_loop(chain, msg)
-        elif int(selection) == 5:
+        elif int(selection) == 4:
             msg = stakerlib.withdraw_TUI(chain, rpc_connection)
             chain_loop(chain, msg)
-        elif int(selection) == 6:
+        elif int(selection) == 5:
             msg = stakerlib.createchain(chain, rpc_connection)
             chain_loop(chain, msg)
-        elif int(selection) == 7:
+        elif int(selection) == 6:
             params = stakerlib.get_chainparams(chain)
             msg = stakerlib.restart_daemon(chain, params, rpc_connection)
             chain_loop(chain, msg)
-        elif int(selection) == 8:
+        elif int(selection) == 7:
             msg = stakerlib.unlockunspent(rpc_connection)
             chain_loop(chain, 'all utxos unlocked')
-        elif int(selection) == 9:
+        elif int(selection) == 8:
             stats_loop(chain, '')
-        elif int(selection) == 10:
+        elif int(selection) == 9:
             dil_loop(chain, 'Dilithium')
         else:
             print('BUG!')
@@ -285,16 +282,15 @@ def dil_stats_loop(chain, msg):
             msg = stakerlib.dil_external_balance(rpc_connection)
             dil_stats_loop(chain, msg)
 
-chain_menu = ['sendmany64',
-              'RNDsendmany',
-              'genaddresses',
-              'importlist',
-              'withdraw',
+chain_menu = ['Generate an address for each segid',
+              'Distribute balance evenly across segids',
+              'Import an already existing address json',
+              'Withdraw coins',
               'Start a new chain',
               'Restart daemon with -blocknotify',
-              'unlock all locked utxos',
-              'stats', 
-              'Dilithium']
+              'Unlock all locked utxos',
+              'Stats menu', 
+              'Dilithium menu']
 stats_menu = ['balance',
               'UTXO count',
               'UTXO average size',
