@@ -600,7 +600,7 @@ def restart_daemon(chain, params, rpc_connection):
            param_list.append('-' + str(i) + '=' + str(params[i]))
     param_list.append(blocknotify)
     param_list.append(pubkey)
-    proc = subprocess.Popen(param_list, stdout=DEVNULL, stderr=STDOUT, preexec_fn=os.setpgrp)
+    proc = subprocess.Popen(param_list, stdout=DEVNULL, stderr=STDOUT) #, preexec_fn=os.setpgrp)
     print('Waiting for daemon to respond, please wait')
     while True:
         time.sleep(10)
