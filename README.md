@@ -43,33 +43,41 @@ Please see the [Installing Smart Chain Software From Source Code](https://develo
 
 The komodod binary must be copied to `~/pos64staker/komodod` for features such as `Start a new chain`, `restart daemon with -blocknotify` and `start a chain from assetchains.json`. 
 
-# Create Windows Binaries From Source
+### Create Windows Binaries From Source
 
 install git https://git-scm.com/download/win
+
 select use minTTY
 
-install python 3.6 
+install python 3.6 64-bit
 https://www.python.org/downloads/windows/
-64-bit
+
 select Add python3 to PATH while installing
 
 Build Tools for Visual Studio
 https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=BuildTools&rel=16
+
 select
 "windows 10 SDK"
 and
 "MSVC v140 - VS 2015 C++ build tools"
 
 Copy `rc.exe` and `rcdll.dll`
+
 From `C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64`
+
 To `C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin`
 
 run `echo %PATH%` in CMD
+
 Copy `libeay32.dll`
+
 From `C:\Program Files\Git\mingw64\bin\libeay32.dll`
+
 To any folder listed in `%PATH`
 
 install pycurl https://www.lfd.uci.edu/~gohlke/pythonlibs/#pycurl
+
 download pycurl-7.43.0.3-cp36-cp36m-win_amd64.whl to Downloads folders
 
 launch CMD
