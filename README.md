@@ -101,7 +101,47 @@ Binaries will be created at `pos64staker/dist/TUIstaker.exe` and `pos64staker/di
 
 ### Using Windows Binaries
 
-Once you have built or downloaded both `TUIstaker.exe` and `staker.exe`, place them in the same folder with `komodod.exe`. Open CMD, powershell or git bash(recommended). Navigate to the folder with `TUIstaker.exe`, `staker.exe` and `komodod.exe`. Start the desired chain normally then run `TUIstaker.exe` from the terminal window. Select `2 | <Add/remove chain>`, type in the ticker of the chain then select the chain from the initial menu. Select `1 | Generate address json` and wait for this to finish. Open the newly created json file. It will be named <CHAIN>.json. Copy one of the pubkeys listed(starts with 02 or 03). Restart the daemon with `"-blocknotify=staker.py %s <CHAIN>" -pubkey=<PUBKEY>`. Wait for the daemon to start and run `TUIstaker.exe` from the terminal once again. This time select, `2 | Distribute balance evenly across segids`. Once this is finished, your node is now ready to stake. Activate staking through a UI or run `komodo-cli.exe -ac_name=<CHAIN> setgenerate true 0` via a terminal. 
+Once you have built or downloaded both `TUIstaker.exe` and `staker.exe`, place both files in the same folder with `komodod.exe`. 
+
+Start the chain and fund your node with the coins you intend to stake. You can do this via a GUI wallet or via `komodod.exe` in terminal. Please see [this document](https://developers.komodoplatform.com/basic-docs/smart-chains/smart-chain-setup/interacting-with-smart-chains.html#using-komodo-cli) if you're unfamilar with this. 
+
+Open a CMD terminal or git bash terminal(recommended). 
+
+Navigate to the folder with `TUIstaker.exe`, `staker.exe` and `komodod.exe`. In this example, we will use a folder named '`pos64staker` the Downloads folder.
+
+Using CMD
+```shell
+cd
+cd Downloads\pos64staker
+TUIstaker.exe
+```
+
+Using git bash
+```shell
+cd
+cd Downloads/pos64staker
+./TUIstaker.exe
+```
+
+Select `2 | <Add/remove chain>`, type in the ticker of the chain then select the chain from the initial menu. 
+
+Select `1 | Generate address json` and wait for this to finish. You can now close the TUI via `ctrl + c` or typing `q` then hitting enter.
+
+Open the newly created json file in a text editor. It will be named <CHAIN>.json. For example, if you did this for LABS, the json will be named `LABS.json`, located at `Downloads\pos64staker\LABS.json`. Copy one of the pubkeys listed(starts with 02 or 03).
+
+ Restart the daemon with `"-blocknotify=staker.py %s <CHAIN>" -pubkey=<PUBKEY>` appended to the chain paremeters. For example, the parameters for LABS would look like this:
+```shell
+komodod.exe -ac_name=LABS -ac_supply=350689 -ac_reward=0,0,800000000 -ac_decay=0,100000000,100000000 -ac_halving=129,1 -ac_end=128,10080,0 -ac_staked=51 -ac_notarypay=64,100000000,1000000000 -ac_eras=3 -ac_cc=101 -ac_ccenable=226,236 -ac_cclib=labs -ac_sapling=1 -addnode=195.201.20.230 -addnode=80.240.17.222 "-blocknotify=staker.exe %s LABS" -pubkey=020000000000000000000000000000000000000000000000000000000000000000
+```
+Please note, that this pubkey, `020000000000000000000000000000000000000000000000000000000000000000` is invalid and is used only as an example. This value will be unique to your node. 
+
+Wait for the daemon to start and run `TUIstaker.exe` from the terminal once again. 
+
+Select, `2 | Distribute balance evenly across segids`. Once this is finished, your node is now ready to stake. 
+
+Activate staking through a GUI or by running `komodo-cli.exe -ac_name=<CHAIN> setgenerate true 0` via a terminal. 
+
+Please note that not all features are supported in Windows at this time, namely `Start a new chain`, `restart daemon with -blocknotify`, `start a chain from assetchains.json` and `Bootstrap a chain from dexstats.info`. 
 
 ## How to Use OSX/Linux Scripts
 
