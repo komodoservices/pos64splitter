@@ -150,7 +150,7 @@ def colorize(string, color):
         'green': '\033[92m',
         'red': '\033[91m'
     }
-    if color not in colors:
+    if operating_system == 'Windows' or color not in colors:
         return string
     else:
         return colors[color] + string + '\033[0m'
@@ -529,7 +529,7 @@ def withdraw_TUI(chain, rpc_connection):
 def start_daemon(chain, no_pk):
     params = get_chainparams(chain)
     if params == 0:
-        return('Error: ' + chain + ' not found in assetchains.json')# FIXME
+        return('Error: ' + chain + ' not found in assetchains.json')
     komodod_path = sys.path[0] + '/komodod'
     param_list = [komodod_path]
     if no_pk != 1:
@@ -639,7 +639,7 @@ def get_chainparams(chain):
         else:
             print('Please copy/move komodod to the same directory as TUIstaker.py')
     else:
-        print('Linux is the only supported OS right now. Please restart daemon manually') #FIXME should work on OSX just fine, test windows
+        print('This feature is not supported in Windows. Please restart daemon manually') #FIXME should work on OSX just fine, test windows
 
 def createchain(chain, rpc_connection):
     def blockcount():

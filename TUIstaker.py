@@ -15,7 +15,6 @@ def load_conf():
         print(e)
         staker_conf = []
         user_input = input('No staker.conf conf file, specify a chain to begin:')
-        msg = stakerlib.start_daemon(user_input, 1)
         staker_conf.append([user_input])
         with open('staker.conf', "a+") as f:
             json.dump(staker_conf, f)
