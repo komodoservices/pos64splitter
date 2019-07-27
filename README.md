@@ -99,7 +99,11 @@ pyinstaller --onefile TUIstaker.py
 
 Binaries will be created at `pos64staker/dist/TUIstaker.exe` and `pos64staker/dist/staker.exe`
 
-## How to Use
+### Using Windows Binaries
+
+Once you have built or downloaded both `TUIstaker.exe` and `staker.exe`, place them in the same folder with `komodod.exe`. Open CMD, powershell or git bash(recommended). Navigate to the folder with `TUIstaker.exe`, `staker.exe` and `komodod.exe`. Start the desired chain normally then run `TUIstaker.exe` from the terminal window. Select `2 | <Add/remove chain>`, type in the ticker of the chain then select the chain from the initial menu. Select `1 | Generate address json` and wait for this to finish. Open the newly created json file. It will be named <CHAIN>.json. Copy one of the pubkeys listed(starts with 02 or 03). Restart the daemon with `"-blocknotify=staker.py %s <CHAIN>" -pubkey=<PUBKEY>`. Wait for the daemon to start and run `TUIstaker.exe` from the terminal once again. This time select, `2 | Distribute balance evenly across segids`. Once this is finished, your node is now ready to stake. Activate staking through a UI or run `komodo-cli.exe -ac_name=<CHAIN> setgenerate true 0` via a terminal. 
+
+## How to Use OSX/Linux Scripts
 
 ```shell
 git clone https://github.com/KMDLabs/pos64staker
