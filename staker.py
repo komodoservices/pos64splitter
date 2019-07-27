@@ -5,15 +5,15 @@ import json
 import stakerlib
 import logging
 
-logging.basicConfig(filename='example.log',level=logging.DEBUG)
-
 BESTBLOCKHASH =  sys.argv[1]
 CHAIN = sys.argv[2]
 TXFEE = 5000
 #bitcoin.params = CoinParams
 #BESTBLOCKHASH = kmdrpc.getbestblockhash_rpc(CHAIN)
 
-    
+logging.basicConfig(filename=CHAIN + 'staking.log',level=logging.DEBUG)
+
+
 # function to get first and last outputs from latest block
 def latest_block_txs(chain, getblock_ret):
     # get txs in latest block
@@ -33,7 +33,7 @@ def staked_from_address(chain, getblock_ret):
     return(pep8fu['vout'][0]['scriptPubKey']['addresses'][0])
 
 
-try:    
+try:
     rpc_connection = stakerlib.def_credentials(CHAIN)
 except:
     logging.debug('Could not get connection to daemon. Exiting')
@@ -76,9 +76,10 @@ if coinbase_address == address:
         logging.debug('SegId not set in block, this should not happen. Exiting.')
         sys.exit(0)
 else:
-    logging.debug('Not our block, exit.')
+    # uncomment this to check that staker.py is actually running on blocknotify
+    #logging.debug('Not our block, exit.')
     sys.exit(0)
-    
+
 txid_list = []
 tx_value = 0
 createraw_list = []
