@@ -150,7 +150,7 @@ def colorize(string, color):
         'green': '\033[92m',
         'red': '\033[91m'
     }
-    if operating_system == 'Windows' or color not in colors:
+    if platform.system() == 'Windows' or color not in colors:
         return string
     else:
         return colors[color] + string + '\033[0m'
