@@ -107,7 +107,7 @@ Start the chain and fund your node with the coins you intend to stake. You can d
 
 Open a CMD terminal or git bash terminal(recommended). 
 
-Navigate to the folder with `TUIstaker.exe`, `staker.exe` and `komodod.exe`. In this example, we will use a folder named '`pos64staker` the Downloads folder.
+Navigate to the folder with `TUIstaker.exe`, `staker.exe` and `komodod.exe`. In this example, we will use a folder named `pos64staker` the Downloads folder.
 
 Using CMD
 ```shell
@@ -141,7 +141,7 @@ Select, `2 | Distribute balance evenly across segids`. Once this is finished, yo
 
 Activate staking through a GUI or by running `komodo-cli.exe -ac_name=<CHAIN> setgenerate true 0` via a terminal. 
 
-Please note that not all features are supported in Windows at this time, namely `Start a new chain`, `restart daemon with -blocknotify`, `start a chain from assetchains.json` and `Bootstrap a chain from dexstats.info`. 
+Please note that not all features are supported in Windows at this time, namely `Start a new chain`, `restart daemon with -blocknotify`, `start a chain from assetchains.json` and `Bootstrap a chain from dexstats.info` are not currently supported. 
 
 ## How to Use OSX/Linux Scripts
 
@@ -170,7 +170,7 @@ This can be used if the chain is not already running and it is included in jl777
 
 ## 1 | Bootstrap a chain from dexstats.info
 
-This will attempt to bootstrap the chain from dexstats.info. This will download the neccesary blockchain data and automatically extract it to the chain's data directory, negating the need to sync the chain manually. Please note that not all Smart Chain bootstraps are available on dexstats.info. 
+This will attempt to bootstrap the chain from dexstats.info. This will download the neccesary blockchain data and automatically extract it to the chain's data directory, negating the need to sync the chain manually. Please note that not all Smart Chain bootstraps are available on dexstats.info. *Note:*bootstrapping is not recommended but is provided as an option for those who undertand the risk. 
 
 ## 2 | <Add/remove chain>
 
@@ -233,7 +233,7 @@ This should be used if you need to move coins from your staking setup. This will
 
 ## 5 | Start a new chain
 
-This feature will automate the setup of a ac_staked Smart Chain. This is useful to prevent chains stalls. Without a proper staking node setup, newly created `ac_staked` chains are prone to chain stalls. To use this, you should finalize your chain parameters, start two nodes with the parameters, ensure they are connected to each other. Prior to mining block 1 on either, select this option. This will lead you through a serious of prompts and ensure a proper staking setup to prevent chain stalls. 
+This feature will automate the setup of a ac_staked Smart Chain. This is useful to prevent chains stalls. Without a proper staking node setup, newly created `ac_staked` chains are prone to chain stalls. To use this, you should finalize your chain parameters, start two nodes with the parameters, ensure they are connected to each other. Prior to mining block 1 on either, select this option. This will lead you through a series of prompts and ensure a proper staking setup to prevent chain stalls. 
 
 ## 6 | Restart daemon with -blocknotify
 
